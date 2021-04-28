@@ -12,17 +12,17 @@ window.onload = () => {
             }`, stylesheet.cssRules.length
         );
 
-        stylesheet.insertRule(
-            `SBUIC.row, SBUIC .row{
-                flex-direction: row;
-            }`, stylesheet.cssRules.length
-        );
+        // stylesheet.insertRule(
+        //     `SBUIC.row, SBUIC .row{
+        //         flex-direction: row;
+        //     }`, stylesheet.cssRules.length
+        // );
 
-        stylesheet.insertRule(
-            `SBUIC.column, SBUIC .column{
-                flex-direction: column;
-            }`, stylesheet.cssRules.length
-        );
+        // stylesheet.insertRule(
+        //     `SBUIC.column, SBUIC .column{
+        //         flex-direction: column;
+        //     }`, stylesheet.cssRules.length
+        // );
 
         //slider
         stylesheet.insertRule(
@@ -37,12 +37,42 @@ window.onload = () => {
         );
 
         stylesheet.insertRule(
+            `.SBUISlider.column{
+                /*DEFAULT VALUES*/
+                height: 300px;
+                width: 100px;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
             `.SBUISlider > .trolley{
                 position: relative;
+                display: flex;
                 /*DEFAULT VALUES*/
                 height: 20%;
                 width: 80%;
                 background-color: grey;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.column > .trolley{
+                flex-direction: column-reverse;
+                /*DEFAULT VALUES*/
+                height: 80%;
+                width: 20%;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.reverse > .trolley{
+                flex-direction: row-reverse;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.column.reverse > .trolley{
+                flex-direction: column;
             }`, stylesheet.cssRules.length
         );
 
@@ -69,6 +99,14 @@ window.onload = () => {
         );
 
         stylesheet.insertRule(
+            `.SBUISlider.column > .trolley > .nodule{
+                /*DEFAULT VALUES*/
+                top: initial;
+                left: calc(50% - 20px);
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
             `.SBUISlider > .trolley > .nodule > .label{
                 position: absolute;
                 /*DEFAULT VALUES*/
@@ -77,6 +115,15 @@ window.onload = () => {
                 color: deepskyblue;
                 top: -35px;
                 user-select: none;
+                font-family: arial, sans-serif;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.column > .trolley > .nodule > .label{
+                /*DEFAULT VALUES*/
+                top: initial;
+                left: 45px;
             }`, stylesheet.cssRules.length
         );
 
@@ -202,54 +249,63 @@ window.onload = () => {
             },
             set: (val) => {
                 if(typeof val != 'string') console.error('Slider Direction value must be a string');
-                else if(!(val == 'row' || val == 'column')) console.error('Slider Direction value must be either row or column');
-                else {
-                    this._direction = val;
-                    elem.classList.remove('row', 'column');
-                    elem.classList.add(val);
+                else{
+                    let [dir, rev] = val.split('-');
+                    if(!(dir == 'row' || dir == 'column') || (rev != undefined && rev != 'reverse')){
+                        console.error('Slider Direction must be either: row, column, row-reverse or column-reverse');
+                    } else {
+                        this._direction = dir;
+                        elem.classList.remove('row', 'column', 'reverse');
+                        elem.classList.add(dir);
+                        if(rev) elem.classList.add(rev);
+                        elem.reversed = (rev) ? true : false;
+                    }
                 }
             }
         });
 
-        Object.defineProperty(elem, 'vmap', {
-            get: () => {
-                return this._vmap;
-            },
-            set: (val) => {
-                if(typeof val != 'function') console.error('Slider Vmap value must be a function');
-                else {
-                    this._vmap = val;
-                }
-            }
-        });
-
-        elem.notch = (per) => {
-            if(elem.notches > 2){
-                let n = 100 / (elem.notches - 1);
-                return n * Math.round(per / n);
-            }
-            return per;
+        //define methods
+        elem.setup = () => {
+            let noduleBBox = nodule.getBoundingClientRect();
+            nodule.offset = (elem.direction == 'row') ? noduleBBox.width/2 : noduleBBox.height/2;
+            elem.render();
         }
 
-        Object.defineProperty(elem, 'percent', {
+        elem.render = () => {
+            let percent = elem.value * 100;
+            if(elem.direction == 'row'){
+                range.style.width = percent + '%';
+                if(elem.reversed) nodule.style.right = `calc(${percent}% - ${nodule.offset}px)`;
+                else nodule.style.left = `calc(${percent}% - ${nodule.offset}px)`;
+            } else {
+                range.style.height = percent + '%';
+                if(elem.reversed) nodule.style.top = `calc(${percent}% - ${nodule.offset}px)`;
+                else nodule.style.bottom = `calc(${percent}% - ${nodule.offset}px)`;
+            }
+            label.textContent = elem.displayValue;
+        }
+
+        elem.notch = (val) => {
+            if(elem.notches > 0){
+                let n = 100 / elem.notches;
+                return (n * Math.round((val * 100) / n))/ 100;
+            }
+            return val;
+        }
+
+        Object.defineProperty(elem, 'value', {
             get: () => {
-                return this._percent;
+                return this._value;
             },
             set: (val) => {
-                if(typeof val != 'number') console.error('Slider Percent value must be a number');
-                // else if(val < elem.min) console.error('Slider Percent cannot be below min (' + elem.min + ')');
-                // else if(val > elem.max) console.error('Slider Percent cannot be above max (' + elem.max + ')');
+                if(typeof val != 'number') console.error('Slider Value must be a number');
                 else {
-                    //functionality
-                    let percent = val;
-                    percent = elem.notch(percent);
-                    this._percent = percent;
-
-                    //styling
-                    range.style.width = percent + '%';
-                    nodule.style.left = `calc(${percent}% - ${nodule.offset/2}px)`;
-                    elem.value = elem.vmap(elem.percent);
-                    label.textContent = ((elem.value * (elem.max - elem.min))/100).toFixed(elem.round);
+                    let value = Math.max(Math.min(val, 1), 0);
+                    value = elem.notch(value);
+                    console.log(value);
+                    this._value = value;
+                    elem.displayValue = (elem.value * (elem.max - elem.min)).toFixed(elem.round);
+                    elem.render();
                 }
             }
         });
@@ -257,30 +313,42 @@ window.onload = () => {
         //set properties
         elem.round = (options.round) ? options.round : 0;
         elem.min = (options.min) ? options.min : 0;
-        elem.max = (options.max) ? options.max : 10;
+        elem.max = (options.max) ? options.max : 100;
         elem.notches = (options.notches) ? options.notches : 0;
-        elem.direction = (options.direction) ? options.direction : 'row';
-        elem.vmap = (options.vmap) ? options.vmap : (val) => {return val};
-        elem.percent = (options.percent) ? options.percent : 50;
-
-        //define methods
-        elem.setup = () => {
-            let noduleBBox = nodule.getBoundingClientRect();
-            nodule.offset = (elem.direction == 'row') ? noduleBBox.width/2 : noduleBBox.height/2;
-            elem.percent = elem.percent;
-        }
-
-        
+        elem.direction = (options.direction) ? options.direction : 'column';
+        elem.value = (options.value) ? options.value : 0.5;
 
         //define user events and functionality
         elem.addEventListener('mousedown', (e) => {
             elem.trolleyBBox = trolley.getBoundingClientRect();
+            let valuefn;
             if(elem.direction == 'row'){
-                let percent = (e.clientX - elem.trolleyBBox.x)/elem.trolleyBBox.width;
-                percent = Math.max(Math.min(percent, 1), 0) * 100;
-                elem.percent = percent;
+                if(elem.reversed){
+                    valuefn = (e) => (elem.trolleyBBox.x + elem.trolleyBBox.width - e.clientX)/elem.trolleyBBox.width;
+                } else {
+                    valuefn = (e) => (e.clientX - elem.trolleyBBox.x)/elem.trolleyBBox.width;
+                }
             } else {
-                //
+                if(elem.reversed){
+                    valuefn = (e) => (e.clientY - elem.trolleyBBox.y)/elem.trolleyBBox.height;
+                } else {
+                    valuefn = (e) => (elem.trolleyBBox.y + elem.trolleyBBox.height - e.clientY)/elem.trolleyBBox.height;
+                }
+            }
+            elem.value = valuefn(e);
+            elem.addEventListener('mousemove', drag);
+            window.addEventListener('mouseup', enddrag);
+            window.addEventListener('mouseleave', enddrag);
+
+            function drag(e){
+                elem.value = valuefn(e);
+            }
+
+            function enddrag(){
+                elem.removeEventListener('mousemove', drag);
+                window.removeEventListener('mouseup', enddrag);
+                window.removeEventListener('mouseleave', enddrag);
+
             }
         });
 
@@ -289,95 +357,4 @@ window.onload = () => {
     let testslider = createElementSB('slider');
     document.body.appendChild(testslider);
     testslider.setup();
-    
-
-    function setupSlider(slider)
-    {
-        let trolley = slider.firstElementChild;
-        let icon = trolley.firstElementChild;
-        //this dictates notches if you want discrete, input example [0, 25, 50, 75, 100]
-        slider.notches = [];
-        //slider.notches = [0, 25, 50, 75, 100];
-        slider.x = trolley.getBoundingClientRect().x;
-        slider.width = trolley.getBoundingClientRect().width;
-        slider.percent = 0;
-        slider.pressed = false;
-        slider.round = true;
-        slider.changebuffer = 0.5;
-
-        icon.offsetx = icon.getBoundingClientRect().width/2;
-        icon.style.left = -icon.offsetx + "px";
-        icon.offsety = icon.getBoundingClientRect().height/2;
-        icon.style.top = "calc(50% - " + icon.offsety + "px)";
-        
-        slider.addEventListener('mousedown', (e) => {
-            slider.pressed = true;
-            slider.x = trolley.getBoundingClientRect().x;
-            slider.changepercent(100*(e.clientX - slider.x)/slider.width);
-        });
-        window.addEventListener('mousemove', (e) => {
-            if(slider.pressed) slider.changepercent(100*(e.clientX - slider.x)/slider.width);
-        });
-
-        slider.changepercent = function(percent)
-        {
-            percent = notch(percent);
-            if(slider.round) percent = Math.round(percent);
-            if(percent < 0) percent = 0;
-            if(percent > 100) percent = 100;
-            if(Math.abs(slider.percent - percent) > slider.changebuffer)
-            {
-                icon.style.left = "calc(" + percent + "% - " + icon.offsetx + "px)";
-                slider.percent = percent;
-                slider.changed();
-            }
-        }
-
-        window.addEventListener('mouseup', () => {
-            slider.pressed = false;
-        });
-        document.body.addEventListener('mouseleave', () => {
-            slider.pressed = false;
-        });
-
-        function notch(per){
-            let offset = 100;
-            let notch = per;
-            for(let i = 0; i < slider.notches.length; i++)
-            {
-                let attempt = Math.abs(per-slider.notches[i]);
-                if(attempt < offset) 
-                {
-                    notch = slider.notches[i];
-                    offset = attempt;
-                }
-            }
-            return notch;
-        }
-
-        //array of functions
-        slider.events = [];
-        slider.spareindexes = [];
-
-        slider.changed = function (){
-            slider.events.forEach(fn => fn.func(slider.percent));
-        }
-
-        slider.addevent = function(fn){
-            let index = (slider.spareindexes.length == 0) ? slider.events.length : slider.spareindexes.pop();
-            slider.events.push({index: index, func:fn});
-            return index;
-        }
-
-        slider.removeevent = function (index){
-            let temp = [];
-            for(let i = 0; i < slider.events.length; i++)
-            {
-                if(slider.events[i].index != index) temp.push(slider.events[i]);
-            }
-            slider.events = temp;
-        }
-
-
-    }
 }

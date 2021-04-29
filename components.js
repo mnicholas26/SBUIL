@@ -127,6 +127,55 @@ window.onload = () => {
             }`, stylesheet.cssRules.length
         );
 
+        //checkbox
+        stylesheet.insertRule(
+            `.SBUICheckbox{
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                /*DEFAULT VALUES*/
+                height: 30px;
+                width: 30px;
+                font-size: 80%;
+                border: deepskyblue 1px solid;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox > .content{
+                display: none;
+                justify-content: center;
+                align-items: center;
+                /*DEFAULT VALUES*/
+                font-size: 24px;
+                height: 80%;
+                width: 80%;
+                color: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox:hover > .content{
+                display: flex;
+                /*DEFAULT VALUES*/
+                color: rgba(0, 191, 255, 0.65);
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox.checked > .content{
+                display: flex;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox.checked:hover > .content{
+                /*DEFAULT VALUES*/
+                color: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
     }
     createStylesheet();
 
@@ -171,6 +220,8 @@ window.onload = () => {
             case "dualslider":
                 break;
             case "checkbox":
+                createCheckbox(elem, options);
+                elem.classList.add('SBUICheckbox');
                 break;
             case "radio":
                 break;
@@ -360,7 +411,67 @@ window.onload = () => {
 
     }
 
-    function testypoo(e){
+    function createCheckbox(elem, options){
+        //check if options exists
+        if(options == undefined) options = {}; 
+
+        //create dom
+        let content = document.createElement('div');
+        content.classList.add('content');
+        elem.appendChild(content);
+
+        //define properties with getters and setters
+        Object.defineProperty(elem, 'content', {
+            get: () => {
+                return this._content;
+            },
+            set: (val) => {
+                if(!(typeof val == 'string' || typeof val == 'number')) console.error('Checkbox Content value must be a string or number');
+                else {
+                    this._content = val;
+                    content.textContent = val;
+                }
+            }
+        });
+
+        Object.defineProperty(elem, 'value', {
+            get: () => {
+                return this._value;
+            },
+            set: (val) => {
+                if(typeof val != 'boolean') console.error('Checkbox Value must be a boolean');
+                else {
+                    if(this._value != val){
+                        if(val) elem.classList.add('checked');
+                        else elem.classList.remove('checked');
+                        this._value = val;
+                        elem.eventObj = {
+                            ...elem.eventObj,
+                            value: val,
+                            displayValue: elem.content
+                        }
+                        elem.changed();
+                    }
+                }
+            }
+        });
+
+        //define methods
+        elem.toggle = () => {
+            elem.value = !elem.value;
+        }
+
+        //set properties
+        elem.content = (options.content) ? options.content : '✔';
+        elem.value = (options.value) ? options.value : false;
+
+        //define user events and functionality
+        elem.addEventListener('mousedown', () => {
+            elem.toggle();
+        });
+    }
+
+    function printEventObj(e){
         console.log(e)
     }
 
@@ -368,5 +479,10 @@ window.onload = () => {
     let testslider = createElementSB('slider');
     document.body.appendChild(testslider);
     testslider.setup();
-    testslider.addListener(testypoo);
+    testslider.addListener(printEventObj);
+
+    let testcheckbox = createElementSB('checkbox');
+    document.body.appendChild(testcheckbox);
+    testcheckbox.addListener(printEventObj);
+    // testcheckbox.content = '😎';
 }

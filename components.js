@@ -136,12 +136,13 @@ window.onload = () => {
 
         elem.disabled = false;
         elem.controller = undefined;
-        elem.eventObj = {};
+        elem.eventObj = {source: elem};
 
         elem.listeners = [];
         elem.spareindexes = [];
 
         elem.changed = () => {
+            elem.eventObj.type = "change";
             for(const listener of elem.listeners){
                 listener.func(elem.eventObj);
             }
@@ -302,10 +303,15 @@ window.onload = () => {
                 else {
                     let value = Math.max(Math.min(val, 1), 0);
                     value = elem.notch(value);
-                    console.log(value);
                     this._value = value;
                     elem.displayValue = (elem.value * (elem.max - elem.min)).toFixed(elem.round);
+                    elem.eventObj = {
+                        ...elem.eventObj,
+                        value: value,
+                        dvalue: elem.displayValue
+                    }
                     elem.render();
+                    elem.changed();
                 }
             }
         });
@@ -315,7 +321,7 @@ window.onload = () => {
         elem.min = (options.min) ? options.min : 0;
         elem.max = (options.max) ? options.max : 100;
         elem.notches = (options.notches) ? options.notches : 0;
-        elem.direction = (options.direction) ? options.direction : 'column';
+        elem.direction = (options.direction) ? options.direction : 'row';
         elem.value = (options.value) ? options.value : 0.5;
 
         //define user events and functionality
@@ -354,7 +360,13 @@ window.onload = () => {
 
     }
 
+    function testypoo(e){
+        console.log(e)
+    }
+
+
     let testslider = createElementSB('slider');
     document.body.appendChild(testslider);
     testslider.setup();
+    testslider.addListener(testypoo);
 }

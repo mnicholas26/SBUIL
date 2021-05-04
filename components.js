@@ -30,6 +30,7 @@ window.onload = () => {
                 display: flex;
                 justify-content: space-around;
                 align-items: center;
+                cursor: pointer;
                 /*DEFAULT VALUES*/
                 height: 100px;
                 width: 300px;
@@ -111,9 +112,9 @@ window.onload = () => {
                 position: absolute;
                 /*DEFAULT VALUES*/
                 height: 40px;
-                font-size: 30px;
+                font-size: 25px;
                 color: deepskyblue;
-                top: -35px;
+                top: -30px;
                 user-select: none;
                 font-family: arial, sans-serif;
             }`, stylesheet.cssRules.length
@@ -135,9 +136,8 @@ window.onload = () => {
                 justify-content: center;
                 align-items: center;
                 /*DEFAULT VALUES*/
-                height: 30px;
-                width: 30px;
-                font-size: 80%;
+                height: 60px;
+                width: 60px;
                 border: deepskyblue 1px solid;
             }`, stylesheet.cssRules.length
         );
@@ -145,34 +145,124 @@ window.onload = () => {
         stylesheet.insertRule(
             `.SBUICheckbox > .content{
                 display: none;
-                justify-content: center;
-                align-items: center;
+                user-select: none;
                 /*DEFAULT VALUES*/
-                font-size: 24px;
                 height: 80%;
                 width: 80%;
-                color: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox > .content > .text{
+                text-anchor: middle;
+                dominant-baseline: central;
+                /*DEFAULT VALUES*/
+                fill: deepskyblue;
+                font-size: 26px;
+                font-family: arial, sans-serif;
             }`, stylesheet.cssRules.length
         );
 
         stylesheet.insertRule(
             `.SBUICheckbox:hover > .content{
-                display: flex;
+                display: block;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUICheckbox:hover > .content > .text{
                 /*DEFAULT VALUES*/
-                color: rgba(0, 191, 255, 0.65);
+                fill: rgba(0, 191, 255, 0.65);
             }`, stylesheet.cssRules.length
         );
 
         stylesheet.insertRule(
             `.SBUICheckbox.checked > .content{
-                display: flex;
+                display: block;
             }`, stylesheet.cssRules.length
         );
 
         stylesheet.insertRule(
-            `.SBUICheckbox.checked:hover > .content{
+            `.SBUICheckbox.checked:hover > .content > .text{
                 /*DEFAULT VALUES*/
+                fill: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        //radio buttons
+        stylesheet.insertRule(
+            `.SBUIRadioButtons{
+                display: flex;
+                justify-content: space-evenly;
+                align-items: center;
+                padding: 5px;
+                /* DEFAULT VALUES */
+                width: 300px;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio{
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                border-radius: 50%;
+                position: relative;
+                user-select: none;
+                /* DEFUALT VALUES */
+                height: 60px;
+                width: 60px;
+                border: 1px solid deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio > .content{
+                border-radius: 50%;
+                display: none;
+                /* DEFUALT VALUES */
+                height: calc(50% + 1px);
+                width: calc(50% + 1px);
+                background-color: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio.selected > .content{
+                display: block;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio:hover > .content{
+                display: block;
+                /* DEFAULT VALUES */
+                background-color: rgba(0, 191, 255, 0.65);
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio.selected:hover > .content{
+                /* DEFAULT VALUES */
+                background-color: deepskyblue;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUIRadioButtons > .radio > .label{
+                position: absolute;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                cursor: default;
+                /* DEFAULT VALUES */
+                top: 120%;
+                font-family: sans-serif;
+                font-size: 14px;
                 color: deepskyblue;
+                max-width: 50px;
             }`, stylesheet.cssRules.length
         );
 
@@ -224,6 +314,8 @@ window.onload = () => {
                 elem.classList.add('SBUICheckbox');
                 break;
             case "radio":
+                createRadioButtons(elem, options);
+                elem.classList.add('SBUIRadioButtons');
                 break;
             case "colourpicker":
                 break;
@@ -257,47 +349,47 @@ window.onload = () => {
         //define properties with getters and setters
         Object.defineProperty(elem, 'round', {
             get: () => {
-                return this._round;
+                return elem._round;
             },
             set: (val) => {
                 if(typeof val != 'number') console.error('Slider Round value must be a number');
-                else this._round = val;
+                else elem._round = val;
             }
         });
 
         Object.defineProperty(elem, 'min', {
             get: () => {
-                return this._min;
+                return elem._min;
             },
             set: (val) => {
                 if(typeof val != 'number') console.error('Slider Min value must be a number');
-                else this._min = val;
+                else elem._min = val;
             }
         });
 
         Object.defineProperty(elem, 'max', {
             get: () => {
-                return this._max;
+                return elem._max;
             },
             set: (val) => {
                 if(typeof val != 'number') console.error('Slider Max value must be a number');
-                else this._max = val;
+                else elem._max = val;
             }
         });
 
         Object.defineProperty(elem, 'notches', {
             get: () => {
-                return this._notches;
+                return elem._notches;
             },
             set: (val) => {
                 if(typeof val != 'number') console.error('Slider Notches value must be a number');
-                else this._notches = val;
+                else elem._notches = val;
             }
         });
 
         Object.defineProperty(elem, 'direction', {
             get: () => {
-                return this._direction;
+                return elem._direction;
             },
             set: (val) => {
                 if(typeof val != 'string') console.error('Slider Direction value must be a string');
@@ -306,7 +398,7 @@ window.onload = () => {
                     if(!(dir == 'row' || dir == 'column') || (rev != undefined && rev != 'reverse')){
                         console.error('Slider Direction must be either: row, column, row-reverse or column-reverse');
                     } else {
-                        this._direction = dir;
+                        elem._direction = dir;
                         elem.classList.remove('row', 'column', 'reverse');
                         elem.classList.add(dir);
                         if(rev) elem.classList.add(rev);
@@ -347,22 +439,24 @@ window.onload = () => {
 
         Object.defineProperty(elem, 'value', {
             get: () => {
-                return this._value;
+                return elem._value;
             },
             set: (val) => {
                 if(typeof val != 'number') console.error('Slider Value must be a number');
                 else {
                     let value = Math.max(Math.min(val, 1), 0);
                     value = elem.notch(value);
-                    this._value = value;
-                    elem.displayValue = (elem.value * (elem.max - elem.min)).toFixed(elem.round);
-                    elem.eventObj = {
-                        ...elem.eventObj,
-                        value: value,
-                        dvalue: elem.displayValue
+                    if(elem._value != value){
+                        elem._value = value;
+                        elem.displayValue = (elem.value * (elem.max - elem.min)).toFixed(elem.round);
+                        elem.eventObj = {
+                            ...elem.eventObj,
+                            value: value,
+                            dvalue: elem.displayValue
+                        }
+                        elem.render();
+                        elem.changed();
                     }
-                    elem.render();
-                    elem.changed();
                 }
             }
         });
@@ -377,6 +471,7 @@ window.onload = () => {
 
         //define user events and functionality
         elem.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             elem.trolleyBBox = trolley.getBoundingClientRect();
             let valuefn;
             if(elem.direction == 'row'){
@@ -416,35 +511,42 @@ window.onload = () => {
         if(options == undefined) options = {}; 
 
         //create dom
-        let content = document.createElement('div');
+        let svgNS = "http://www.w3.org/2000/svg";
+        let content = document.createElementNS(svgNS, 'svg');
         content.classList.add('content');
+        content.setAttribute('viewBox', '0 0 30 30');
+        let text = document.createElementNS(svgNS, 'text');
+        text.classList.add('text');
+        text.setAttribute('x', '50%');
+        text.setAttribute('y', '50%');
+        content.appendChild(text);
         elem.appendChild(content);
 
         //define properties with getters and setters
         Object.defineProperty(elem, 'content', {
             get: () => {
-                return this._content;
+                return elem._content;
             },
             set: (val) => {
                 if(!(typeof val == 'string' || typeof val == 'number')) console.error('Checkbox Content value must be a string or number');
                 else {
-                    this._content = val;
-                    content.textContent = val;
+                    elem._content = val;
+                    text.textContent = val;
                 }
             }
         });
 
         Object.defineProperty(elem, 'value', {
             get: () => {
-                return this._value;
+                return elem._value;
             },
             set: (val) => {
                 if(typeof val != 'boolean') console.error('Checkbox Value must be a boolean');
                 else {
-                    if(this._value != val){
+                    if(elem._value != val){
                         if(val) elem.classList.add('checked');
                         else elem.classList.remove('checked');
-                        this._value = val;
+                        elem._value = val;
                         elem.eventObj = {
                             ...elem.eventObj,
                             value: val,
@@ -471,6 +573,100 @@ window.onload = () => {
         });
     }
 
+    function createRadioButtons(elem, options){
+        //OPTIONS REQUIRED
+        if(options == undefined || options.n == undefined) console.error('This element requires an options object with n (amount of buttons) specified');
+        else if(typeof options.n != 'number') console.error('n (amount of buttons) must be a number');
+        else if(options.n < 1) console.error('n (amount of buttons) must be at least 1');
+        else {
+            //create dom
+            let buttons = [];
+            for(let i = 0; i < options.n; i++){
+                let button = document.createElement('div');
+                button.i = i;
+                button.classList.add('radio');
+                button.select = () => {
+                    button.classList.add('selected');
+                }
+                button.addEventListener('mousedown', () => {
+                    elem.select(button.i);
+                })
+                buttons.push(button);
+                
+                let content = document.createElement('div');
+                content.classList.add('content');
+                button.appendChild(content);
+                
+                let label = document.createElement('div');
+                label.classList.add('label');
+                button.label = label;
+                
+                button.appendChild(label);
+                elem.appendChild(button);
+            }
+
+            //define properties with getters and setters
+            Object.defineProperty(elem, 'labels', {
+                get: () => {
+                    return elem._labels;
+                },
+                set: (val) => {
+                    if(!(val instanceof Array)) console.error('Radio Buttons Labels value must be an array');
+                    else if(val.length == 0) return;
+                    else if(val.length != buttons.length) console.error('Radio Buttons Labels value must equal n (amount of buttons)');
+                    else {
+                        elem._labels = val;
+                        for(let [i, button] of buttons.entries()){
+                            button.label.textContent = val[i];
+                        }
+                    }
+                }
+            });
+
+            Object.defineProperty(elem, 'value', {
+                get: () => {
+                    return elem._value;
+                },
+                set: (val) => {
+                    if(typeof val != 'number') console.error('Radio Button Value must be a number');
+                    else {
+                        if((val < 0 || val > buttons.length) && elem._value != -1){
+                            buttons[elem._value].classList.remove('selected');
+                            elem._value = -1;
+                            elem.eventObj = {
+                                ...elem.eventObj,
+                                value: val,
+                                displayValue: undefined
+                            }
+                            elem.changed();
+                        } else if(elem._value != val){
+                            if(elem._value != -1) buttons[elem._value].classList.remove('selected');
+                            elem._value = val;
+                            let button = buttons[elem._value];
+                            button.select();
+                            elem.eventObj = {
+                                ...elem.eventObj,
+                                value: val,
+                                displayValue: button.label.textContent
+                            }
+                            elem.changed();
+                        }
+                    }
+                }
+            });
+
+            //define methods
+            elem.select = (n) => {
+                elem.value = n;
+            }
+
+            //set properties
+            elem.labels = (options.labels) ? options.labels : [];
+            elem._value = -1;
+            if(options.value != undefined) elem.value = options.value;
+        }
+    }
+
     function printEventObj(e){
         console.log(e)
     }
@@ -484,5 +680,9 @@ window.onload = () => {
     let testcheckbox = createElementSB('checkbox');
     document.body.appendChild(testcheckbox);
     testcheckbox.addListener(printEventObj);
-    // testcheckbox.content = '😎';
+    // testcheckbox.content = '🅱';
+
+    let testradio = createElementSB('radio', {n: 4, labels: ['poo', 'big poo', 'OMEGA big poo', '🔥'], value: 0});
+    document.body.appendChild(testradio);
+    testradio.addListener(printEventObj);
 }

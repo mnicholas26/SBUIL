@@ -5,3 +5,7 @@
 .SBUISlider > .trolley > .range {
     background-color: pink;
 } */
+
+body > div{
+    margin: 30px;;
+}

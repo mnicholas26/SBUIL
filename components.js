@@ -80,6 +80,7 @@ window.onload = () => {
         stylesheet.insertRule(
             `.SBUISlider > .trolley > .range{
                 height: 100%;
+                width: 100%;
                 /*DEFAULT VALUES*/
                 background-color: deepskyblue;
             }`, stylesheet.cssRules.length
@@ -110,11 +111,14 @@ window.onload = () => {
         stylesheet.insertRule(
             `.SBUISlider > .trolley > .nodule > .label{
                 position: absolute;
+                display: flex;
+                justify-content: center;
+                align-items: center;
                 /*DEFAULT VALUES*/
                 height: 40px;
                 font-size: 25px;
                 color: deepskyblue;
-                top: -30px;
+                top: -35px;
                 user-select: none;
                 font-family: arial, sans-serif;
             }`, stylesheet.cssRules.length
@@ -125,6 +129,30 @@ window.onload = () => {
                 /*DEFAULT VALUES*/
                 top: initial;
                 left: 45px;
+            }`, stylesheet.cssRules.length
+        );
+
+        //dual slider
+        stylesheet.insertRule(
+            `.SBUISlider.dual > .trolley > .range{
+                position: absolute;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.dual > .trolley > .nodule > .label[min]{
+                /*DEFAULT VALUES*/
+                top: initial;
+                bottom: -35px;
+            }`, stylesheet.cssRules.length
+        );
+
+        stylesheet.insertRule(
+            `.SBUISlider.dual.column > .trolley > .nodule > .label[min]{
+                /*DEFAULT VALUES*/
+                bottom: initial;
+                left: initial;
+                right: 45px;
             }`, stylesheet.cssRules.length
         );
 
@@ -308,6 +336,8 @@ window.onload = () => {
                 elem.classList.add('SBUISlider');
                 break;
             case "dualslider":
+                createDualSlider(elem, options);
+                elem.classList.add('SBUISlider', 'dual');
                 break;
             case "checkbox":
                 createCheckbox(elem, options);
@@ -667,6 +697,279 @@ window.onload = () => {
         }
     }
 
+    function createDualSlider(elem, options){
+        //check if options exists
+        if(options == undefined) options = {}; 
+
+        //create dom
+        let trolley = document.createElement('div');
+        trolley.classList.add('trolley');
+        let range = document.createElement('div');
+        range.classList.add('range');
+        let noduleL = document.createElement('div');
+        noduleL.classList.add('nodule');
+        noduleL.setAttribute('min', '');
+        let noduleR = document.createElement('div');
+        noduleR.classList.add('nodule');
+        noduleR.setAttribute('max', '');
+        let labelL = document.createElement('div');
+        labelL.classList.add('label');
+        labelL.setAttribute('min', '');
+        let labelR = document.createElement('div');
+        labelR.classList.add('label');
+        labelR.setAttribute('max', '');
+
+        trolley.appendChild(range);
+        noduleL.appendChild(labelL);
+        noduleR.appendChild(labelR);
+        trolley.appendChild(noduleL);
+        trolley.appendChild(noduleR);
+        elem.appendChild(trolley);
+
+        //define properties with getters and setters
+        Object.defineProperty(elem, 'round', {
+            get: () => {
+                return elem._round;
+            },
+            set: (val) => {
+                if(typeof val != 'number') console.error('Slider Round value must be a number');
+                else elem._round = val;
+            }
+        });
+
+        Object.defineProperty(elem, 'min', {
+            get: () => {
+                return elem._min;
+            },
+            set: (val) => {
+                if(typeof val != 'number') console.error('Slider Min value must be a number');
+                else elem._min = val;
+            }
+        });
+
+        Object.defineProperty(elem, 'max', {
+            get: () => {
+                return elem._max;
+            },
+            set: (val) => {
+                if(typeof val != 'number') console.error('Slider Max value must be a number');
+                else elem._max = val;
+            }
+        });
+
+        Object.defineProperty(elem, 'notches', {
+            get: () => {
+                return elem._notches;
+            },
+            set: (val) => {
+                if(typeof val != 'number') console.error('Slider Notches value must be a number');
+                else elem._notches = val;
+            }
+        });
+
+        Object.defineProperty(elem, 'direction', {
+            get: () => {
+                return elem._direction;
+            },
+            set: (val) => {
+                if(typeof val != 'string') console.error('Slider Direction value must be a string');
+                else{
+                    let [dir, rev] = val.split('-');
+                    if(!(dir == 'row' || dir == 'column') || (rev != undefined && rev != 'reverse')){
+                        console.error('Slider Direction must be either: row, column, row-reverse or column-reverse');
+                    } else {
+                        elem._direction = dir;
+                        elem.classList.remove('row', 'column', 'reverse');
+                        elem.classList.add(dir);
+                        if(rev) elem.classList.add(rev);
+                        elem.reversed = (rev) ? true : false;
+                    }
+                }
+            }
+        });
+
+        Object.defineProperty(elem, 'nearest', {
+            get: () => {
+                return elem._nearest;
+            },
+            set: (val) => {
+                if(typeof val != 'boolean') console.error('Slider Nearest value must be a boolean');
+                else{
+                    elem._nearest = val;
+                }
+            }
+        });
+
+        //define methods
+        elem.setup = () => {
+            let noduleBBoxL = noduleL.getBoundingClientRect();
+            noduleL.offset = (elem.direction == 'row') ? noduleBBoxL.width/2 : noduleBBoxL.height/2;
+            let noduleBBoxR = noduleR.getBoundingClientRect();
+            noduleR.offset = (elem.direction == 'row') ? noduleBBoxR.width/2 : noduleBBoxR.height/2;
+            elem.render();
+        }
+
+        elem.render = () => {
+            let minp = elem.value.min * 100;
+            let maxp = elem.value.max * 100;
+            let diff = maxp - minp;
+            if(elem.direction == 'row'){
+                range.style.width = diff + '%';
+                if(elem.reversed){
+                    noduleL.style.right = `calc(${minp}% - ${noduleL.offset}px)`;
+                    noduleR.style.right = `calc(${maxp}% - ${noduleR.offset}px)`;
+                    range.style.right = minp + '%';
+                } else {
+                    noduleL.style.left = `calc(${minp}% - ${noduleL.offset}px)`;
+                    noduleR.style.left = `calc(${maxp}% - ${noduleR.offset}px)`;
+                    range.style.left = minp + '%';
+                }
+            } else {
+                range.style.height = diff + '%';
+                if(elem.reversed){
+                    noduleL.style.top = `calc(${minp}% - ${noduleL.offset}px)`;
+                    noduleR.style.top = `calc(${maxp}% - ${noduleR.offset}px)`;
+                    range.style.top = minp + '%';
+                } else {
+                    noduleL.style.bottom = `calc(${minp}% - ${noduleL.offset}px)`;
+                    noduleR.style.bottom = `calc(${maxp}% - ${noduleR.offset}px)`;
+                    range.style.bottom = minp + '%';
+                }
+            }
+            labelL.textContent = elem.displayValue.min;
+            labelR.textContent = elem.displayValue.max;
+        }
+
+        elem.notch = (val) => {
+            if(elem.notches > 0){
+                let n = 100 / elem.notches;
+                return (n * Math.round((val * 100) / n))/ 100;
+            }
+            return val;
+        }
+
+        Object.defineProperty(elem, 'value', {
+            get: () => {
+                return elem._value;
+            },
+            set: (val) => {
+                if(val.min == undefined || val.max == undefined) console.error('Dual Slider Value must be an object with a min and max property');
+                if(typeof val.min != 'number' || typeof val.max != 'number') console.error('Dual Slider Values (min/max) must be numbers');
+                else {
+                    let minv = Math.max(Math.min(val.min, 1), 0);
+                    let maxv = Math.max(Math.min(val.max, 1), 0);
+                    minv = elem.notch(minv);
+                    maxv = elem.notch(maxv);
+                    if(minv > elem._value.max) maxv = minv;
+                    else if(maxv < elem._value.min) minv = maxv;
+                    if(elem._value.min != minv || elem._value.max != maxv){
+                        elem._value = {min: minv, max: maxv};
+                        elem.displayValue = {
+                            min: (elem.value.min * (elem.max - elem.min)).toFixed(elem.round),
+                            max: (elem.value.max * (elem.max - elem.min)).toFixed(elem.round)
+                        }
+                        elem.eventObj = {
+                            ...elem.eventObj,
+                            value: elem._value,
+                            dvalue: elem.displayValue
+                        }
+                        elem.render();
+                        elem.changed();
+                    }
+                }
+            }
+        });
+
+        //set properties
+        elem.round = (options.round) ? options.round : 0;
+        elem.min = (options.min) ? options.min : 0;
+        elem.max = (options.max) ? options.max : 1000;
+        elem.notches = (options.notches) ? options.notches : 20;
+        elem.direction = (options.direction) ? options.direction : 'row';
+        elem._value = {min: undefined, max: undefined};
+        elem.value = (options.value) ? options.value : {min: 0.25, max: 0.75};
+        elem.nearest = (options.nearest) ? options.nearest : true;
+
+        //define user events and functionality
+        // noduleL.addEventListener('mousedown', noduleDrag);
+        // noduleR.addEventListener('mousedown', noduleDrag);
+        elem.addEventListener('mousedown', e => {
+            if(!elem.nearest && e.target != noduleL && e.target != noduleR) return;
+            e.preventDefault();
+            elem.trolleyBBox = trolley.getBoundingClientRect();
+            let valuefn;
+            if(elem.direction == 'row'){
+                if(elem.reversed){
+                    valuefn = (e) => (elem.trolleyBBox.x + elem.trolleyBBox.width - e.clientX)/elem.trolleyBBox.width;
+                } else {
+                    valuefn = (e) => (e.clientX - elem.trolleyBBox.x)/elem.trolleyBBox.width;
+                }
+            } else {
+                if(elem.reversed){
+                    valuefn = (e) => (e.clientY - elem.trolleyBBox.y)/elem.trolleyBBox.height;
+                } else {
+                    valuefn = (e) => (elem.trolleyBBox.y + elem.trolleyBBox.height - e.clientY)/elem.trolleyBBox.height;
+                }
+            }
+            let val = valuefn(e);
+            let left;
+            if(elem.nearest) left = (Math.abs(val - elem.value.min) < Math.abs(val - elem.value.max)) ? true : false;
+            else left = e.target == noduleL ? true : false;
+            console.log(left);
+            elem.value = left ? {min: val, max: elem.value.max} : {min: elem.value.min, max: val};
+            elem.addEventListener('mousemove', drag);
+            window.addEventListener('mouseup', enddrag);
+            window.addEventListener('mouseleave', enddrag);
+
+            function drag(e){
+                elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
+            }
+
+            function enddrag(){
+                elem.removeEventListener('mousemove', drag);
+                window.removeEventListener('mouseup', enddrag);
+                window.removeEventListener('mouseleave', enddrag);
+
+            }
+        });
+
+        function noduleDrag(e){
+            let left = (e.target == noduleL) ? true : false;
+            e.preventDefault();
+            elem.trolleyBBox = trolley.getBoundingClientRect();
+            let valuefn;
+            if(elem.direction == 'row'){
+                if(elem.reversed){
+                    valuefn = (e) => (elem.trolleyBBox.x + elem.trolleyBBox.width - e.clientX)/elem.trolleyBBox.width;
+                } else {
+                    valuefn = (e) => (e.clientX - elem.trolleyBBox.x)/elem.trolleyBBox.width;
+                }
+            } else {
+                if(elem.reversed){
+                    valuefn = (e) => (e.clientY - elem.trolleyBBox.y)/elem.trolleyBBox.height;
+                } else {
+                    valuefn = (e) => (elem.trolleyBBox.y + elem.trolleyBBox.height - e.clientY)/elem.trolleyBBox.height;
+                }
+            }
+            elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
+            elem.addEventListener('mousemove', drag);
+            window.addEventListener('mouseup', enddrag);
+            window.addEventListener('mouseleave', enddrag);
+
+            function drag(e){
+                elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
+            }
+
+            function enddrag(){
+                elem.removeEventListener('mousemove', drag);
+                window.removeEventListener('mouseup', enddrag);
+                window.removeEventListener('mouseleave', enddrag);
+
+            }
+        }
+
+    }
+
     function printEventObj(e){
         console.log(e)
     }
@@ -685,4 +988,9 @@ window.onload = () => {
     let testradio = createElementSB('radio', {n: 4, labels: ['poo', 'big poo', 'OMEGA big poo', '🔥'], value: 0});
     document.body.appendChild(testradio);
     testradio.addListener(printEventObj);
+
+    let testdslider = createElementSB('dualslider');
+    document.body.appendChild(testdslider);
+    testdslider.setup();
+    testdslider.addListener(printEventObj);
 }

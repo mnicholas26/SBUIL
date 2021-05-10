@@ -303,21 +303,37 @@ window.onload = () => {
 
         elem.disabled = false;
         elem.controller = undefined;
-        elem.eventObj = {source: elem};
 
         elem.listeners = [];
         elem.spareindexes = [];
+        elem.environment = {
+            user: false
+        }
 
-        elem.changed = () => {
-            elem.eventObj.type = "change";
+        elem.fireEvent = (event, options) => {
+            let ev = {
+                source: elem,
+                type: event
+            };
+            for(const option of Object.keys(options)){
+                ev[option] = options[option];
+            }
+            for(const env of Object.keys(elem.environment)){
+                ev[env] = elem.environment[env];
+            }
+            listenerloop: 
             for(const listener of elem.listeners){
-                listener.func(elem.eventObj);
+                if(event != listener.type) continue;
+                for(const option of Object.keys(listener.options)){
+                    if(ev[option] != listener.options[option]) continue listenerloop;
+                }
+                listener.func(ev);
             }
         }
 
-        elem.addListener = (fn) => {
+        elem.addListener = (event, fn, options = {}) => {
             let index = (elem.spareindexes.length == 0) ? elem.listeners.length : elem.spareindexes.pop();
-            elem.listeners.push({index: index, func:fn});
+            elem.listeners.push({index: index, type: event, func:fn, options: options});
             return index;
         }
 
@@ -476,16 +492,11 @@ window.onload = () => {
                 else {
                     let value = Math.max(Math.min(val, 1), 0);
                     value = elem.notch(value);
-                    if(elem._value != value){
+                    if(elem._value != value || elem.environment.final){
                         elem._value = value;
                         elem.displayValue = (elem.value * (elem.max - elem.min)).toFixed(elem.round);
-                        elem.eventObj = {
-                            ...elem.eventObj,
-                            value: value,
-                            dvalue: elem.displayValue
-                        }
                         elem.render();
-                        elem.changed();
+                        elem.fireEvent('change', {value: value, dvalue: elem.displayValue});
                     }
                 }
             }
@@ -498,6 +509,12 @@ window.onload = () => {
         elem.notches = (options.notches) ? options.notches : 0;
         elem.direction = (options.direction) ? options.direction : 'row';
         elem.value = (options.value) ? options.value : 0.5;
+
+        //set local environment
+        elem.environment = {
+            ...elem.environment,
+            final: false,
+        }
 
         //define user events and functionality
         elem.addEventListener('mousedown', (e) => {
@@ -517,6 +534,9 @@ window.onload = () => {
                     valuefn = (e) => (elem.trolleyBBox.y + elem.trolleyBBox.height - e.clientY)/elem.trolleyBBox.height;
                 }
             }
+
+            elem.environment.final = false;
+            elem.environment.user = true;
             elem.value = valuefn(e);
             elem.addEventListener('mousemove', drag);
             window.addEventListener('mouseup', enddrag);
@@ -526,7 +546,10 @@ window.onload = () => {
                 elem.value = valuefn(e);
             }
 
-            function enddrag(){
+            function enddrag(e){
+                elem.environment.final = true;
+                elem.value = valuefn(e);
+                elem.environment.user = false;
                 elem.removeEventListener('mousemove', drag);
                 window.removeEventListener('mouseup', enddrag);
                 window.removeEventListener('mouseleave', enddrag);
@@ -577,12 +600,7 @@ window.onload = () => {
                         if(val) elem.classList.add('checked');
                         else elem.classList.remove('checked');
                         elem._value = val;
-                        elem.eventObj = {
-                            ...elem.eventObj,
-                            value: val,
-                            displayValue: elem.content
-                        }
-                        elem.changed();
+                        elem.fireEvent('change', {value: val, dvalue: elem.content});
                     }
                 }
             }
@@ -597,9 +615,16 @@ window.onload = () => {
         elem.content = (options.content) ? options.content : '✔';
         elem.value = (options.value) ? options.value : false;
 
+        //set local environment
+        elem.environment = {
+            ...elem.environment
+        }
+
         //define user events and functionality
         elem.addEventListener('mousedown', () => {
+            elem.environment.user = true;
             elem.toggle();
+            elem.environment.user = false;
         });
     }
 
@@ -619,7 +644,9 @@ window.onload = () => {
                     button.classList.add('selected');
                 }
                 button.addEventListener('mousedown', () => {
+                    elem.environment.user = true;
                     elem.select(button.i);
+                    elem.environment.user = false;
                 })
                 buttons.push(button);
                 
@@ -663,23 +690,13 @@ window.onload = () => {
                         if((val < 0 || val > buttons.length) && elem._value != -1){
                             buttons[elem._value].classList.remove('selected');
                             elem._value = -1;
-                            elem.eventObj = {
-                                ...elem.eventObj,
-                                value: val,
-                                displayValue: undefined
-                            }
-                            elem.changed();
+                            elem.fireEvent('change', {value: val, dvalue: undefined});
                         } else if(elem._value != val){
                             if(elem._value != -1) buttons[elem._value].classList.remove('selected');
                             elem._value = val;
                             let button = buttons[elem._value];
                             button.select();
-                            elem.eventObj = {
-                                ...elem.eventObj,
-                                value: val,
-                                displayValue: button.label.textContent
-                            }
-                            elem.changed();
+                            elem.fireEvent('change', {value: val, dvalue: button.label.textContent});
                         }
                     }
                 }
@@ -694,6 +711,11 @@ window.onload = () => {
             elem.labels = (options.labels) ? options.labels : [];
             elem._value = -1;
             if(options.value != undefined) elem.value = options.value;
+
+            //set local environment
+            elem.environment = {
+                ...elem.environment
+            }
         }
     }
 
@@ -848,6 +870,26 @@ window.onload = () => {
             return val;
         }
 
+        // Object.defineProperty(elem, 'vmin', {
+        //     get: () => {
+        //         return elem._vmin;
+        //     },
+        //     set: (val) => {
+        //         if(typeof val != 'number') console.error('Dual Slider Minimum Value must be a number');
+        //         else {
+        //             val = Math.max(Math.min(val, 1), 0);
+        //             val = elem.notch(val);
+        //             if(val > elem._value.max) elem._value.max = val;
+        //             if(elem._vmin != val || elem.environment.final){
+        //                 elem._vmin = val;
+        //                 elem.displayValue.min = (elem.value.min * (elem.max - elem.min)).toFixed(elem.round);
+        //                 elem.render();
+        //                 elem.fireEvent('change', {value: elem._value, dvalue: elem.displayValue});
+        //             }
+        //         }
+        //     }
+        // });
+
         Object.defineProperty(elem, 'value', {
             get: () => {
                 return elem._value;
@@ -862,19 +904,14 @@ window.onload = () => {
                     maxv = elem.notch(maxv);
                     if(minv > elem._value.max) maxv = minv;
                     else if(maxv < elem._value.min) minv = maxv;
-                    if(elem._value.min != minv || elem._value.max != maxv){
+                    if(elem._value.min != minv || elem._value.max != maxv || elem.environment.final){
                         elem._value = {min: minv, max: maxv};
                         elem.displayValue = {
                             min: (elem.value.min * (elem.max - elem.min)).toFixed(elem.round),
                             max: (elem.value.max * (elem.max - elem.min)).toFixed(elem.round)
                         }
-                        elem.eventObj = {
-                            ...elem.eventObj,
-                            value: elem._value,
-                            dvalue: elem.displayValue
-                        }
                         elem.render();
-                        elem.changed();
+                        elem.fireEvent('change', {value: elem._value, dvalue: elem.displayValue});
                     }
                 }
             }
@@ -889,6 +926,12 @@ window.onload = () => {
         elem._value = {min: undefined, max: undefined};
         elem.value = (options.value) ? options.value : {min: 0.25, max: 0.75};
         elem.nearest = (options.nearest) ? options.nearest : true;
+
+        //set local environment
+        elem.environment = {
+            ...elem.environment,
+            final: false,
+        }
 
         //define user events and functionality
         // noduleL.addEventListener('mousedown', noduleDrag);
@@ -915,7 +958,9 @@ window.onload = () => {
             let left;
             if(elem.nearest) left = (Math.abs(val - elem.value.min) < Math.abs(val - elem.value.max)) ? true : false;
             else left = e.target == noduleL ? true : false;
-            console.log(left);
+
+            elem.environment.user = true;
+            elem.environment.final = false;
             elem.value = left ? {min: val, max: elem.value.max} : {min: elem.value.min, max: val};
             elem.addEventListener('mousemove', drag);
             window.addEventListener('mouseup', enddrag);
@@ -925,48 +970,16 @@ window.onload = () => {
                 elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
             }
 
-            function enddrag(){
+            function enddrag(e){
+                elem.environment.final = true;
+                elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
+                elem.environment.user = false;
                 elem.removeEventListener('mousemove', drag);
                 window.removeEventListener('mouseup', enddrag);
                 window.removeEventListener('mouseleave', enddrag);
 
             }
         });
-
-        function noduleDrag(e){
-            let left = (e.target == noduleL) ? true : false;
-            e.preventDefault();
-            elem.trolleyBBox = trolley.getBoundingClientRect();
-            let valuefn;
-            if(elem.direction == 'row'){
-                if(elem.reversed){
-                    valuefn = (e) => (elem.trolleyBBox.x + elem.trolleyBBox.width - e.clientX)/elem.trolleyBBox.width;
-                } else {
-                    valuefn = (e) => (e.clientX - elem.trolleyBBox.x)/elem.trolleyBBox.width;
-                }
-            } else {
-                if(elem.reversed){
-                    valuefn = (e) => (e.clientY - elem.trolleyBBox.y)/elem.trolleyBBox.height;
-                } else {
-                    valuefn = (e) => (elem.trolleyBBox.y + elem.trolleyBBox.height - e.clientY)/elem.trolleyBBox.height;
-                }
-            }
-            elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
-            elem.addEventListener('mousemove', drag);
-            window.addEventListener('mouseup', enddrag);
-            window.addEventListener('mouseleave', enddrag);
-
-            function drag(e){
-                elem.value = left ? {min: valuefn(e), max: elem.value.max} : {min: elem.value.min, max: valuefn(e)};
-            }
-
-            function enddrag(){
-                elem.removeEventListener('mousemove', drag);
-                window.removeEventListener('mouseup', enddrag);
-                window.removeEventListener('mouseleave', enddrag);
-
-            }
-        }
 
     }
 
@@ -978,19 +991,20 @@ window.onload = () => {
     let testslider = createElementSB('slider');
     document.body.appendChild(testslider);
     testslider.setup();
-    testslider.addListener(printEventObj);
+    testslider.addListener('change', printEventObj);
 
     let testcheckbox = createElementSB('checkbox');
     document.body.appendChild(testcheckbox);
-    testcheckbox.addListener(printEventObj);
+    testcheckbox.addListener('change', printEventObj);
     // testcheckbox.content = '🅱';
 
     let testradio = createElementSB('radio', {n: 4, labels: ['poo', 'big poo', 'OMEGA big poo', '🔥'], value: 0});
     document.body.appendChild(testradio);
-    testradio.addListener(printEventObj);
+    testradio.addListener('change', printEventObj);
 
     let testdslider = createElementSB('dualslider');
     document.body.appendChild(testdslider);
     testdslider.setup();
-    testdslider.addListener(printEventObj);
+    testdslider.addListener('change', printEventObj, {final: true, user: true});
+    testdslider.value = {min: 0.1, max: 0.9};
 }

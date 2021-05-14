@@ -1208,56 +1208,33 @@ window.onload = () => {
 
             if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
             let options = {
-                round: (opts.round) ? true : false,
-                decimal: (opts.decimal) ? true : false
+                round: (opts.round) ? true : false
             }
 
             if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(args[0].r != undefined && args[0].g != undefined && args[0].b != undefined){
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHSL')){
                     r = args[0].r;
                     g = args[0].g;
                     b = args[0].b;
-                    if(args[0].a != undefined){
+                    if(args[0].a){
                         alpha = true;
                         a = args[0].a;
                     }
-                } else console.error(`Passed object requires 'r', 'g' and 'b' properties`);
-            } else if(args.length == 3) {
-                [r, g, b] = args;
-            } else if(args.length == 4) {
-                alpha = true;
-                [r, g, b, a] = args;
+                } else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let input = {
+                    r: args[0],
+                    g: args[1],
+                    b: args[2],
+                    a: args[3]
+                }
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoHSL')){
+                    [r, g, b, a] = args;
+                    if(a) alpha = true;
+                } else return;
             } else {
-                console.error(`Arguement error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
+                console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
                 return;
-            }
-
-            //sanity checking
-            if(typeof r == 'number'){
-                if(r < 0 || r > 255){
-                    console.error(`'r' value must be between 0 and 255, provided value: ${r}`);
-                    return;
-                }
-            } else console.error(`'r' value must be a number, provided type: ${typeof r}`);
-            if(typeof g == 'number'){
-                if(g < 0 || g > 255){
-                    console.error(`'g' value must be between 0 and 255, provided value: ${g}`);
-                    return;
-                }
-            } else console.error(`'g' value must be a number, provided type: ${typeof g}`);
-            if(typeof b == 'number'){
-                if(b < 0 || b > 255){
-                    console.error(`'b' value must be between 0 and 255, provided value: ${b}`);
-                    return;
-                }
-            } else console.error(`'b' value must be a number, provided type: ${typeof b}`);
-            if(a != undefined){
-                if(typeof a == 'number'){
-                    if(a < 0 || a > 1){
-                        console.error(`if 'a' value is provided it must be between 0 and 1, provided value: ${a}`);
-                        return;
-                    }
-                } else console.error(`if 'a' value is provided it must be a number, provided type: ${typeof a}`);
             }
 
             let rr = r/255;
@@ -1286,8 +1263,8 @@ window.onload = () => {
 
             let out = {
                 h: options.round ? Math.round(h) : h,
-                s: options.decimal ? s : options.round ? Math.round(s * 1000) / 10 : s * 100,
-                l: options.decimal ? l : options.round ? Math.round(l * 1000) / 10 : l * 100
+                s: options.round ? Math.round(s * 1000) / 10 : s * 100,
+                l: options.round ? Math.round(l * 1000) / 10 : l * 100
             }
 
             if(alpha) out.a = a;
@@ -1300,63 +1277,38 @@ window.onload = () => {
 
             if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
             let options = {
-                round: (opts.round) ? true : false,
-                decimal: (opts.decimal) ? true : false
+                round: (opts.round) ? true : false
             }
 
             if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(args[0].h != undefined && args[0].s != undefined && args[0].l != undefined){
+                if(validator(SBColour.HSLblueprint, args[0], 'HSLtoRGB')){
                     h = args[0].h;
                     s = args[0].s;
                     l = args[0].l;
-                    if(args[0].a != undefined){
+                    if(args[0].a){
                         alpha = true;
                         a = args[0].a;
                     }
-                } else console.error(`Passed object requires 'h', 's' and 'l' properties`);
-            } else if(args.length == 3) {
-                [h, s, l] = args;
-            } else if(args.length == 4) {
-                alpha = true;
-                [h, s, l, a] = args;
+                } else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let input = {
+                    h: args[0],
+                    s: args[1],
+                    l: args[2],
+                    a: args[3]
+                }
+                if(validator(SBColour.HSLblueprint, input, 'HSLtoRGB')){
+                    [h, s, l, a] = args;
+                    if(a) alpha = true;
+                } else return;
             } else {
-                console.error(`Arguement error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
+                console.error(`Argument Error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
                 return;
             }
 
-            //sanity checking
-            if(typeof h == 'number'){
-                if(h < 0 || h > 360){
-                    console.error(`'h' value must be between 0 and 360, provided value: ${h}`);
-                    return;
-                }
-            } else console.error(`'h' value must be a number, provided type: ${typeof h}`);
-            if(typeof s == 'number'){
-                if(s < 0 || s > 100){
-                    console.error(`'s' value must be between 0 and 100, provided value: ${s}`);
-                    return;
-                }
-            } else console.error(`'s' value must be a number, provided type: ${typeof s}`);
-            if(typeof l == 'number'){
-                if(l < 0 || l > 100){
-                    console.error(`'l' value must be between 0 and 100, provided value: ${l}`);
-                    return;
-                }
-            } else console.error(`'l' value must be a number, provided type: ${typeof l}`);
-            if(a != undefined){
-                if(typeof a == 'number'){
-                    if(a < 0 || a > 1){
-                        console.error(`if 'a' value is provided it must be between 0 and 1, provided value: ${a}`);
-                        return;
-                    }
-                } else console.error(`if 'a' value is provided it must be a number, provided type: ${typeof a}`);
-            }
-
             let r, g, b;
-            if(!options.decimal){
-                s /= 100;
-                l /= 100;
-            }
+            s /= 100;
+            l /= 100;
             
             let c = (1 - Math.abs((2 * l) - 1)) * s;
             let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
@@ -1388,74 +1340,1760 @@ window.onload = () => {
             let r, g, b, a, alpha = false, opts = {};
 
             if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
-            let options = {}
+            let options = {
+                alpha: opts.alpha ? true : false
+            }
 
             if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(args[0].r != undefined && args[0].g != undefined && args[0].b != undefined){
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')){
                     r = args[0].r;
                     g = args[0].g;
                     b = args[0].b;
-                    if(args[0].a != undefined){
+                    if(args[0].a){
                         alpha = true;
                         a = args[0].a;
                     }
-                } else console.error(`Passed object requires 'r', 'g' and 'b' properties`);
-            } else if(args.length == 3) {
-                [r, g, b] = args;
-            } else if(args.length == 4) {
-                alpha = true;
-                [r, g, b, a] = args;
+                } else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let input = {
+                    r: args[0],
+                    g: args[1],
+                    b: args[2],
+                    a: args[3]
+                }
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoHEX')){
+                    [r, g, b, a] = args;
+                    if(a) alpha = true;
+                } else return;
             } else {
-                console.error(`Arguement error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
+                console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
                 return;
             }
 
-            //sanity checking
-            if(typeof r == 'number'){
-                if(r < 0 || r > 255){
-                    console.error(`'r' value must be between 0 and 255, provided value: ${r}`);
-                    return;
-                }
-            } else console.error(`'r' value must be a number, provided type: ${typeof r}`);
-            if(typeof g == 'number'){
-                if(g < 0 || g > 255){
-                    console.error(`'g' value must be between 0 and 255, provided value: ${g}`);
-                    return;
-                }
-            } else console.error(`'g' value must be a number, provided type: ${typeof g}`);
-            if(typeof b == 'number'){
-                if(b < 0 || b > 255){
-                    console.error(`'b' value must be between 0 and 255, provided value: ${b}`);
-                    return;
-                }
-            } else console.error(`'b' value must be a number, provided type: ${typeof b}`);
-            if(a != undefined){
-                if(typeof a == 'number'){
-                    if(a < 0 || a > 1){
-                        console.error(`if 'a' value is provided it must be between 0 and 1, provided value: ${a}`);
-                        return;
-                    }
-                } else console.error(`if 'a' value is provided it must be a number, provided type: ${typeof a}`);
-            }
-
             let hex = '#';
-            hex += r.toString(16) + g.toString(16) + b.toString(16);
-            if(alpha) {
-                a*=255
+            hex += Math.round(r).toString(16) + Math.round(g).toString(16) + Math.round(b).toString(16);
+            if(alpha && options.alpha) {
+                a=Math.round(255 * a);
                 hex += a.toString(16);
             }
 
             return hex;
         }
 
-    }
+        static HEXtoRGB(hex, opacity){
+            let hexreg = /#[abcdef\d]*/i;
+            let blueprint = [
+                {
+                    name: 'hex',
+                    req: true,
+                    type: 'string',
+                    reg: hexreg
+                },
+                {
+                    name: 'opacity',
+                    req: false,
+                    type: 'number',
+                    min: 0,
+                    max: 1
+                }
+            ];
+            if(validator(blueprint, {hex: hex, opacity: opacity}, 'HEXtoRGB')){
+                hex = hex.slice(hex.indexOf('#') + 1);
+                if(hex.length == 1) hex = hex.repeat(6);
+                else if(hex.length == 2) hex = hex.repeat(3);
+                else if(hex.length == 3) hex = hex.repeat(2);
+                else if(!(hex.length == 6 || hex.length == 8))
+                    console.error(`Value Error. Hex Code: '${hex}' has length: '${hex.length}' but should be either 1, 2, 3, 6 or 8 digits long`);
+                hex = hex.toLowerCase();
+                
+                let reg = /\w{2}/g || [];
+                let [r, g, b, a] = hex.match(reg);
+                if(a == undefined) a = 'ff';
+                r = parseInt(r, 16);
+                g = parseInt(g, 16);
+                b = parseInt(b, 16);
+                a = opacity != undefined ? opacity : parseInt(a, 16)/255;
+                return {
+                    r: r,
+                    g: g,
+                    b: b,
+                    a: (hex.length == 8) ? a : undefined
+                }
+            }
+        }
 
-    function stringToColour(str){
-        //
+        static CSStoRGB(name, opacity){
+            if(validator([{name: 'opacity', req: false, type: 'number', min: 0, max: 1},
+                            {name: 'name', req: true, type: 'string'}], {opacity: opacity, name: name}, 'CSStoRGB')){
+                let out = SBColour.cssTable.find(o => o.name == name.toLowerCase());
+                if(out != undefined){
+                    let a = opacity != undefined ? opacity : undefined;
+                    out = out.rgb;
+                    out.a = a;
+                }
+                return out;
+            }
+        }
+
+        static RGBtoCSS(...args){
+            let r, g, b;
+
+            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')){
+                    r = args[0].r;
+                    g = args[0].g;
+                    b = args[0].b;
+                } else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let input = {
+                    r: args[0],
+                    g: args[1],
+                    b: args[2]
+                }
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoCSS')){
+                    [r, g, b] = args;
+                } else return;
+            } else {
+                console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b values`);
+                return;
+            }
+            
+            let out = SBColour.cssTable.find(o => (o.rgb.r == r && o.rgb.g == g && o.rgb.b == b));
+            if(out != undefined) out = out.name;
+            return out;
+        }
+
+        //may turn these functions into direct functions at a later date
+        static HSLtoHEX(...args){
+            let h, s, l, a;
+            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
+                if(validator(SBColour.HSLblueprint, args[0], 'HSLtoRGB')){
+                    h = args[0].h;
+                    s = args[0].s;
+                    l = args[0].l;
+                    if(args[0].a){
+                        alpha = true;
+                        a = args[0].a;
+                    }
+                } else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let input = {
+                    h: args[0],
+                    s: args[1],
+                    l: args[2],
+                    a: args[3]
+                }
+                if(validator(SBColour.HSLblueprint, input, 'HSLtoRGB')){
+                    [h, s, l, a] = args;
+                    if(a) alpha = true;
+                } else return;
+            } else {
+                console.error(`Argument Error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
+                return;
+            }
+            return SBColour.RGBtoHEX(SBColour.HSLtoRGB(r, g, b, a));
+        }
+
+        static HSLtoCSS(...args){
+            let [r, g, b, a] = args;
+            return SBColour.RGBtoCSS(SBColour.HSLtoRGB(r, g, b, a));
+        }
+
+        static CSStoHEX(name, opacity){
+            return SBColour.RGBtoHEX(SBColour.CSStoRGB(name, opacity));
+        }
+
+        static CSStoHSL(name, opacity){
+            return SBColour.RGBtoHSL(SBColour.CSStoRGB(name, opacity));
+        }
+
+        static HEXtoHSL(hex, opacity){
+            return SBColour.RGBtoHSL(SBColour.HEXtoRGB(hex, opacity));
+        }
+
+        static HEXtoCSS(hex, opacity){
+            return SBColour.RGBtoCSS(SBColour.HEXtoRGB(hex, opacity));
+        }
+
+        static RGBblueprint = [
+            {
+                name: 'r',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 255
+            },
+            {
+                name: 'g',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 255
+            },
+            {
+                name: 'b',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 255
+            },
+            {
+                name: 'a',
+                req: false,
+                type: 'number',
+                min: 0,
+                max: 1
+            },
+        ];
+
+        static HSLblueprint = [
+            {
+                name: 'h',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 360
+            },
+            {
+                name: 's',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 100
+            },
+            {
+                name: 'l',
+                req: true,
+                type: 'number',
+                min: 0,
+                max: 100
+            },
+            {
+                name: 'a',
+                req: false,
+                type: 'number',
+                min: 0,
+                max: 1
+            },
+        ];
+
+        static cssTable = [
+            {
+                "name": "black",
+                "hex": "000000",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "silver",
+                "hex": "C0C0C0",
+                "rgb": {
+                    "r":  192,
+                    "g":  192,
+                    "b":  192
+                }
+            },
+            {
+                "name": "gray",
+                "hex": "808080",
+                "rgb": {
+                    "r":  128,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "white",
+                "hex": "FFFFFF",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "maroon",
+                "hex": "800000",
+                "rgb": {
+                    "r":  128,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "red",
+                "hex": "FF0000",
+                "rgb": {
+                    "r":  255,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "purple",
+                "hex": "800080",
+                "rgb": {
+                    "r":  128,
+                    "g":  0,
+                    "b":  128
+                }
+            },
+            {
+                "name": "fuchsia",
+                "hex": "FF00FF",
+                "rgb": {
+                    "r":  255,
+                    "g":  0,
+                    "b":  255
+                }
+            },
+            {
+                "name": "green",
+                "hex": "008000",
+                "rgb": {
+                    "r":  0,
+                    "g":  128,
+                    "b":  0
+                }
+            },
+            {
+                "name": "lime",
+                "hex": "00FF00",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  0
+                }
+            },
+            {
+                "name": "olive",
+                "hex": "808000",
+                "rgb": {
+                    "r":  128,
+                    "g":  128,
+                    "b":  0
+                }
+            },
+            {
+                "name": "yellow",
+                "hex": "FFFF00",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  0
+                }
+            },
+            {
+                "name": "navy",
+                "hex": "000080",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  128
+                }
+            },
+            {
+                "name": "blue",
+                "hex": "0000FF",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  255
+                }
+            },
+            {
+                "name": "teal",
+                "hex": "008080",
+                "rgb": {
+                    "r":  0,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "aqua",
+                "hex": "00FFFF",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "aliceblue",
+                "hex": "f0f8ff",
+                "rgb": {
+                    "r":  240,
+                    "g":  248,
+                    "b":  255
+                }
+            },
+            {
+                "name": "antiquewhite",
+                "hex": "faebd7",
+                "rgb": {
+                    "r":  250,
+                    "g":  235,
+                    "b":  215
+                }
+            },
+            {
+                "name": "aqua",
+                "hex": "00ffff",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "aquamarine",
+                "hex": "7fffd4",
+                "rgb": {
+                    "r":  127,
+                    "g":  255,
+                    "b":  212
+                }
+            },
+            {
+                "name": "azure",
+                "hex": "f0ffff",
+                "rgb": {
+                    "r":  240,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "beige",
+                "hex": "f5f5dc",
+                "rgb": {
+                    "r":  245,
+                    "g":  245,
+                    "b":  220
+                }
+            },
+            {
+                "name": "bisque",
+                "hex": "ffe4c4",
+                "rgb": {
+                    "r":  255,
+                    "g":  228,
+                    "b":  196
+                }
+            },
+            {
+                "name": "black",
+                "hex": "000000",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "blanchedalmond",
+                "hex": "ffebcd",
+                "rgb": {
+                    "r":  255,
+                    "g":  235,
+                    "b":  205
+                }
+            },
+            {
+                "name": "blue",
+                "hex": "0000ff",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  255
+                }
+            },
+            {
+                "name": "blueviolet",
+                "hex": "8a2be2",
+                "rgb": {
+                    "r":  138,
+                    "g":  43,
+                    "b":  226
+                }
+            },
+            {
+                "name": "brown",
+                "hex": "a52a2a",
+                "rgb": {
+                    "r":  165,
+                    "g":  42,
+                    "b":  42
+                }
+            },
+            {
+                "name": "burlywood",
+                "hex": "deb887",
+                "rgb": {
+                    "r":  222,
+                    "g":  184,
+                    "b":  135
+                }
+            },
+            {
+                "name": "cadetblue",
+                "hex": "5f9ea0",
+                "rgb": {
+                    "r":  95,
+                    "g":  158,
+                    "b":  160
+                }
+            },
+            {
+                "name": "chartreuse",
+                "hex": "7fff00",
+                "rgb": {
+                    "r":  127,
+                    "g":  255,
+                    "b":  0
+                }
+            },
+            {
+                "name": "chocolate",
+                "hex": "d2691e",
+                "rgb": {
+                    "r":  210,
+                    "g":  105,
+                    "b":  30
+                }
+            },
+            {
+                "name": "coral",
+                "hex": "ff7f50",
+                "rgb": {
+                    "r":  255,
+                    "g":  127,
+                    "b":  80
+                }
+            },
+            {
+                "name": "cornflowerblue",
+                "hex": "6495ed",
+                "rgb": {
+                    "r":  100,
+                    "g":  149,
+                    "b":  237
+                }
+            },
+            {
+                "name": "cornsilk",
+                "hex": "fff8dc",
+                "rgb": {
+                    "r":  255,
+                    "g":  248,
+                    "b":  220
+                }
+            },
+            {
+                "name": "crimson",
+                "hex": "dc143c",
+                "rgb": {
+                    "r":  220,
+                    "g":  20,
+                    "b":  60
+                }
+            },
+            {
+                "name": "cyan",
+                "hex": "00ffff",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "darkblue",
+                "hex": "00008b",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  139
+                }
+            },
+            {
+                "name": "darkcyan",
+                "hex": "008b8b",
+                "rgb": {
+                    "r":  0,
+                    "g":  139,
+                    "b":  139
+                }
+            },
+            {
+                "name": "darkgoldenrod",
+                "hex": "b8860b",
+                "rgb": {
+                    "r":  184,
+                    "g":  134,
+                    "b":  11
+                }
+            },
+            {
+                "name": "darkgray",
+                "hex": "a9a9a9",
+                "rgb": {
+                    "r":  169,
+                    "g":  169,
+                    "b":  169
+                }
+            },
+            {
+                "name": "darkgreen",
+                "hex": "006400",
+                "rgb": {
+                    "r":  0,
+                    "g":  100,
+                    "b":  0
+                }
+            },
+            {
+                "name": "darkgrey",
+                "hex": "a9a9a9",
+                "rgb": {
+                    "r":  169,
+                    "g":  169,
+                    "b":  169
+                }
+            },
+            {
+                "name": "darkkhaki",
+                "hex": "bdb76b",
+                "rgb": {
+                    "r":  189,
+                    "g":  183,
+                    "b":  107
+                }
+            },
+            {
+                "name": "darkmagenta",
+                "hex": "8b008b",
+                "rgb": {
+                    "r":  139,
+                    "g":  0,
+                    "b":  139
+                }
+            },
+            {
+                "name": "darkolivegreen",
+                "hex": "556b2f",
+                "rgb": {
+                    "r":  85,
+                    "g":  107,
+                    "b":  47
+                }
+            },
+            {
+                "name": "darkorange",
+                "hex": "ff8c00",
+                "rgb": {
+                    "r":  255,
+                    "g":  140,
+                    "b":  0
+                }
+            },
+            {
+                "name": "darkorchid",
+                "hex": "9932cc",
+                "rgb": {
+                    "r":  153,
+                    "g":  50,
+                    "b":  204
+                }
+            },
+            {
+                "name": "darkred",
+                "hex": "8b0000",
+                "rgb": {
+                    "r":  139,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "darksalmon",
+                "hex": "e9967a",
+                "rgb": {
+                    "r":  233,
+                    "g":  150,
+                    "b":  122
+                }
+            },
+            {
+                "name": "darkseagreen",
+                "hex": "8fbc8f",
+                "rgb": {
+                    "r":  143,
+                    "g":  188,
+                    "b":  143
+                }
+            },
+            {
+                "name": "darkslateblue",
+                "hex": "483d8b",
+                "rgb": {
+                    "r":  72,
+                    "g":  61,
+                    "b":  139
+                }
+            },
+            {
+                "name": "darkslategray",
+                "hex": "2f4f4f",
+                "rgb": {
+                    "r":  47,
+                    "g":  79,
+                    "b":  79
+                }
+            },
+            {
+                "name": "darkslategrey",
+                "hex": "2f4f4f",
+                "rgb": {
+                    "r":  47,
+                    "g":  79,
+                    "b":  79
+                }
+            },
+            {
+                "name": "darkturquoise",
+                "hex": "00ced1",
+                "rgb": {
+                    "r":  0,
+                    "g":  206,
+                    "b":  209
+                }
+            },
+            {
+                "name": "darkviolet",
+                "hex": "9400d3",
+                "rgb": {
+                    "r":  148,
+                    "g":  0,
+                    "b":  211
+                }
+            },
+            {
+                "name": "deeppink",
+                "hex": "ff1493",
+                "rgb": {
+                    "r":  255,
+                    "g":  20,
+                    "b":  147
+                }
+            },
+            {
+                "name": "deepskyblue",
+                "hex": "00bfff",
+                "rgb": {
+                    "r":  0,
+                    "g":  191,
+                    "b":  255
+                }
+            },
+            {
+                "name": "dimgray",
+                "hex": "696969",
+                "rgb": {
+                    "r":  105,
+                    "g":  105,
+                    "b":  105
+                }
+            },
+            {
+                "name": "dimgrey",
+                "hex": "696969",
+                "rgb": {
+                    "r":  105,
+                    "g":  105,
+                    "b":  105
+                }
+            },
+            {
+                "name": "dodgerblue",
+                "hex": "1e90ff",
+                "rgb": {
+                    "r":  30,
+                    "g":  144,
+                    "b":  255
+                }
+            },
+            {
+                "name": "firebrick",
+                "hex": "b22222",
+                "rgb": {
+                    "r":  178,
+                    "g":  34,
+                    "b":  34
+                }
+            },
+            {
+                "name": "floralwhite",
+                "hex": "fffaf0",
+                "rgb": {
+                    "r":  255,
+                    "g":  250,
+                    "b":  240
+                }
+            },
+            {
+                "name": "forestgreen",
+                "hex": "228b22",
+                "rgb": {
+                    "r":  34,
+                    "g":  139,
+                    "b":  34
+                }
+            },
+            {
+                "name": "fuchsia",
+                "hex": "ff00ff",
+                "rgb": {
+                    "r":  255,
+                    "g":  0,
+                    "b":  255
+                }
+            },
+            {
+                "name": "gainsboro",
+                "hex": "dcdcdc",
+                "rgb": {
+                    "r":  220,
+                    "g":  220,
+                    "b":  220
+                }
+            },
+            {
+                "name": "ghostwhite",
+                "hex": "f8f8ff",
+                "rgb": {
+                    "r":  248,
+                    "g":  248,
+                    "b":  255
+                }
+            },
+            {
+                "name": "gold",
+                "hex": "ffd700",
+                "rgb": {
+                    "r":  255,
+                    "g":  215,
+                    "b":  0
+                }
+            },
+            {
+                "name": "goldenrod",
+                "hex": "daa520",
+                "rgb": {
+                    "r":  218,
+                    "g":  165,
+                    "b":  32
+                }
+            },
+            {
+                "name": "gray",
+                "hex": "808080",
+                "rgb": {
+                    "r":  128,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "green",
+                "hex": "008000",
+                "rgb": {
+                    "r":  0,
+                    "g":  128,
+                    "b":  0
+                }
+            },
+            {
+                "name": "greenyellow",
+                "hex": "adff2f",
+                "rgb": {
+                    "r":  173,
+                    "g":  255,
+                    "b":  47
+                }
+            },
+            {
+                "name": "grey",
+                "hex": "808080",
+                "rgb": {
+                    "r":  128,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "honeydew",
+                "hex": "f0fff0",
+                "rgb": {
+                    "r":  240,
+                    "g":  255,
+                    "b":  240
+                }
+            },
+            {
+                "name": "hotpink",
+                "hex": "ff69b4",
+                "rgb": {
+                    "r":  255,
+                    "g":  105,
+                    "b":  180
+                }
+            },
+            {
+                "name": "indianred",
+                "hex": "cd5c5c",
+                "rgb": {
+                    "r":  205,
+                    "g":  92,
+                    "b":  92
+                }
+            },
+            {
+                "name": "indigo",
+                "hex": "4b0082",
+                "rgb": {
+                    "r":  75,
+                    "g":  0,
+                    "b":  130
+                }
+            },
+            {
+                "name": "ivory",
+                "hex": "fffff0",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  240
+                }
+            },
+            {
+                "name": "khaki",
+                "hex": "f0e68c",
+                "rgb": {
+                    "r":  240,
+                    "g":  230,
+                    "b":  140
+                }
+            },
+            {
+                "name": "lavender",
+                "hex": "e6e6fa",
+                "rgb": {
+                    "r":  230,
+                    "g":  230,
+                    "b":  250
+                }
+            },
+            {
+                "name": "lavenderblush",
+                "hex": "fff0f5",
+                "rgb": {
+                    "r":  255,
+                    "g":  240,
+                    "b":  245
+                }
+            },
+            {
+                "name": "lawngreen",
+                "hex": "7cfc00",
+                "rgb": {
+                    "r":  124,
+                    "g":  252,
+                    "b":  0
+                }
+            },
+            {
+                "name": "lemonchiffon",
+                "hex": "fffacd",
+                "rgb": {
+                    "r":  255,
+                    "g":  250,
+                    "b":  205
+                }
+            },
+            {
+                "name": "lightblue",
+                "hex": "add8e6",
+                "rgb": {
+                    "r":  173,
+                    "g":  216,
+                    "b":  230
+                }
+            },
+            {
+                "name": "lightcoral",
+                "hex": "f08080",
+                "rgb": {
+                    "r":  240,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "lightcyan",
+                "hex": "e0ffff",
+                "rgb": {
+                    "r":  224,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "lightgoldenrodyellow",
+                "hex": "fafad2",
+                "rgb": {
+                    "r":  250,
+                    "g":  250,
+                    "b":  210
+                }
+            },
+            {
+                "name": "lightgray",
+                "hex": "d3d3d3",
+                "rgb": {
+                    "r":  211,
+                    "g":  211,
+                    "b":  211
+                }
+            },
+            {
+                "name": "lightgreen",
+                "hex": "90ee90",
+                "rgb": {
+                    "r":  144,
+                    "g":  238,
+                    "b":  144
+                }
+            },
+            {
+                "name": "lightgrey",
+                "hex": "d3d3d3",
+                "rgb": {
+                    "r":  211,
+                    "g":  211,
+                    "b":  211
+                }
+            },
+            {
+                "name": "lightpink",
+                "hex": "ffb6c1",
+                "rgb": {
+                    "r":  255,
+                    "g":  182,
+                    "b":  193
+                }
+            },
+            {
+                "name": "lightsalmon",
+                "hex": "ffa07a",
+                "rgb": {
+                    "r":  255,
+                    "g":  160,
+                    "b":  122
+                }
+            },
+            {
+                "name": "lightseagreen",
+                "hex": "20b2aa",
+                "rgb": {
+                    "r":  32,
+                    "g":  178,
+                    "b":  170
+                }
+            },
+            {
+                "name": "lightskyblue",
+                "hex": "87cefa",
+                "rgb": {
+                    "r":  135,
+                    "g":  206,
+                    "b":  250
+                }
+            },
+            {
+                "name": "lightslategray",
+                "hex": "778899",
+                "rgb": {
+                    "r":  119,
+                    "g":  136,
+                    "b":  153
+                }
+            },
+            {
+                "name": "lightslategrey",
+                "hex": "778899",
+                "rgb": {
+                    "r":  119,
+                    "g":  136,
+                    "b":  153
+                }
+            },
+            {
+                "name": "lightsteelblue",
+                "hex": "b0c4de",
+                "rgb": {
+                    "r":  176,
+                    "g":  196,
+                    "b":  222
+                }
+            },
+            {
+                "name": "lightyellow",
+                "hex": "ffffe0",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  224
+                }
+            },
+            {
+                "name": "lime",
+                "hex": "00ff00",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  0
+                }
+            },
+            {
+                "name": "limegreen",
+                "hex": "32cd32",
+                "rgb": {
+                    "r":  50,
+                    "g":  205,
+                    "b":  50
+                }
+            },
+            {
+                "name": "linen",
+                "hex": "faf0e6",
+                "rgb": {
+                    "r":  250,
+                    "g":  240,
+                    "b":  230
+                }
+            },
+            {
+                "name": "magenta",
+                "hex": "ff00ff",
+                "rgb": {
+                    "r":  255,
+                    "g":  0,
+                    "b":  255
+                }
+            },
+            {
+                "name": "maroon",
+                "hex": "800000",
+                "rgb": {
+                    "r":  128,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "mediumaquamarine",
+                "hex": "66cdaa",
+                "rgb": {
+                    "r":  102,
+                    "g":  205,
+                    "b":  170
+                }
+            },
+            {
+                "name": "mediumblue",
+                "hex": "0000cd",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  205
+                }
+            },
+            {
+                "name": "mediumorchid",
+                "hex": "ba55d3",
+                "rgb": {
+                    "r":  186,
+                    "g":  85,
+                    "b":  211
+                }
+            },
+            {
+                "name": "mediumpurple",
+                "hex": "9370db",
+                "rgb": {
+                    "r":  147,
+                    "g":  112,
+                    "b":  219
+                }
+            },
+            {
+                "name": "mediumseagreen",
+                "hex": "3cb371",
+                "rgb": {
+                    "r":  60,
+                    "g":  179,
+                    "b":  113
+                }
+            },
+            {
+                "name": "mediumslateblue",
+                "hex": "7b68ee",
+                "rgb": {
+                    "r":  123,
+                    "g":  104,
+                    "b":  238
+                }
+            },
+            {
+                "name": "mediumspringgreen",
+                "hex": "00fa9a",
+                "rgb": {
+                    "r":  0,
+                    "g":  250,
+                    "b":  154
+                }
+            },
+            {
+                "name": "mediumturquoise",
+                "hex": "48d1cc",
+                "rgb": {
+                    "r":  72,
+                    "g":  209,
+                    "b":  204
+                }
+            },
+            {
+                "name": "mediumvioletred",
+                "hex": "c71585",
+                "rgb": {
+                    "r":  199,
+                    "g":  21,
+                    "b":  133
+                }
+            },
+            {
+                "name": "midnightblue",
+                "hex": "191970",
+                "rgb": {
+                    "r":  25,
+                    "g":  25,
+                    "b":  112
+                }
+            },
+            {
+                "name": "mintcream",
+                "hex": "f5fffa",
+                "rgb": {
+                    "r":  245,
+                    "g":  255,
+                    "b":  250
+                }
+            },
+            {
+                "name": "mistyrose",
+                "hex": "ffe4e1",
+                "rgb": {
+                    "r":  255,
+                    "g":  228,
+                    "b":  225
+                }
+            },
+            {
+                "name": "moccasin",
+                "hex": "ffe4b5",
+                "rgb": {
+                    "r":  255,
+                    "g":  228,
+                    "b":  181
+                }
+            },
+            {
+                "name": "navajowhite",
+                "hex": "ffdead",
+                "rgb": {
+                    "r":  255,
+                    "g":  222,
+                    "b":  173
+                }
+            },
+            {
+                "name": "navy",
+                "hex": "000080",
+                "rgb": {
+                    "r":  0,
+                    "g":  0,
+                    "b":  128
+                }
+            },
+            {
+                "name": "oldlace",
+                "hex": "fdf5e6",
+                "rgb": {
+                    "r":  253,
+                    "g":  245,
+                    "b":  230
+                }
+            },
+            {
+                "name": "olive",
+                "hex": "808000",
+                "rgb": {
+                    "r":  128,
+                    "g":  128,
+                    "b":  0
+                }
+            },
+            {
+                "name": "olivedrab",
+                "hex": "6b8e23",
+                "rgb": {
+                    "r":  107,
+                    "g":  142,
+                    "b":  35
+                }
+            },
+            {
+                "name": "orange",
+                "hex": "ffa500",
+                "rgb": {
+                    "r":  255,
+                    "g":  165,
+                    "b":  0
+                }
+            },
+            {
+                "name": "orangered",
+                "hex": "ff4500",
+                "rgb": {
+                    "r":  255,
+                    "g":  69,
+                    "b":  0
+                }
+            },
+            {
+                "name": "orchid",
+                "hex": "da70d6",
+                "rgb": {
+                    "r":  218,
+                    "g":  112,
+                    "b":  214
+                }
+            },
+            {
+                "name": "palegoldenrod",
+                "hex": "eee8aa",
+                "rgb": {
+                    "r":  238,
+                    "g":  232,
+                    "b":  170
+                }
+            },
+            {
+                "name": "palegreen",
+                "hex": "98fb98",
+                "rgb": {
+                    "r":  152,
+                    "g":  251,
+                    "b":  152
+                }
+            },
+            {
+                "name": "paleturquoise",
+                "hex": "afeeee",
+                "rgb": {
+                    "r":  175,
+                    "g":  238,
+                    "b":  238
+                }
+            },
+            {
+                "name": "palevioletred",
+                "hex": "db7093",
+                "rgb": {
+                    "r":  219,
+                    "g":  112,
+                    "b":  147
+                }
+            },
+            {
+                "name": "papayawhip",
+                "hex": "ffefd5",
+                "rgb": {
+                    "r":  255,
+                    "g":  239,
+                    "b":  213
+                }
+            },
+            {
+                "name": "peachpuff",
+                "hex": "ffdab9",
+                "rgb": {
+                    "r":  255,
+                    "g":  218,
+                    "b":  185
+                }
+            },
+            {
+                "name": "peru",
+                "hex": "cd853f",
+                "rgb": {
+                    "r":  205,
+                    "g":  133,
+                    "b":  63
+                }
+            },
+            {
+                "name": "pink",
+                "hex": "ffc0cb",
+                "rgb": {
+                    "r":  255,
+                    "g":  192,
+                    "b":  203
+                }
+            },
+            {
+                "name": "plum",
+                "hex": "dda0dd",
+                "rgb": {
+                    "r":  221,
+                    "g":  160,
+                    "b":  221
+                }
+            },
+            {
+                "name": "powderblue",
+                "hex": "b0e0e6",
+                "rgb": {
+                    "r":  176,
+                    "g":  224,
+                    "b":  230
+                }
+            },
+            {
+                "name": "purple",
+                "hex": "800080",
+                "rgb": {
+                    "r":  128,
+                    "g":  0,
+                    "b":  128
+                }
+            },
+            {
+                "name": "red",
+                "hex": "ff0000",
+                "rgb": {
+                    "r":  255,
+                    "g":  0,
+                    "b":  0
+                }
+            },
+            {
+                "name": "rosybrown",
+                "hex": "bc8f8f",
+                "rgb": {
+                    "r":  188,
+                    "g":  143,
+                    "b":  143
+                }
+            },
+            {
+                "name": "royalblue",
+                "hex": "4169e1",
+                "rgb": {
+                    "r":  65,
+                    "g":  105,
+                    "b":  225
+                }
+            },
+            {
+                "name": "saddlebrown",
+                "hex": "8b4513",
+                "rgb": {
+                    "r":  139,
+                    "g":  69,
+                    "b":  19
+                }
+            },
+            {
+                "name": "salmon",
+                "hex": "fa8072",
+                "rgb": {
+                    "r":  250,
+                    "g":  128,
+                    "b":  114
+                }
+            },
+            {
+                "name": "sandybrown",
+                "hex": "f4a460",
+                "rgb": {
+                    "r":  244,
+                    "g":  164,
+                    "b":  96
+                }
+            },
+            {
+                "name": "seagreen",
+                "hex": "2e8b57",
+                "rgb": {
+                    "r":  46,
+                    "g":  139,
+                    "b":  87
+                }
+            },
+            {
+                "name": "seashell",
+                "hex": "fff5ee",
+                "rgb": {
+                    "r":  255,
+                    "g":  245,
+                    "b":  238
+                }
+            },
+            {
+                "name": "sienna",
+                "hex": "a0522d",
+                "rgb": {
+                    "r":  160,
+                    "g":  82,
+                    "b":  45
+                }
+            },
+            {
+                "name": "silver",
+                "hex": "c0c0c0",
+                "rgb": {
+                    "r":  192,
+                    "g":  192,
+                    "b":  192
+                }
+            },
+            {
+                "name": "skyblue",
+                "hex": "87ceeb",
+                "rgb": {
+                    "r":  135,
+                    "g":  206,
+                    "b":  235
+                }
+            },
+            {
+                "name": "slateblue",
+                "hex": "6a5acd",
+                "rgb": {
+                    "r":  106,
+                    "g":  90,
+                    "b":  205
+                }
+            },
+            {
+                "name": "slategray",
+                "hex": "708090",
+                "rgb": {
+                    "r":  112,
+                    "g":  128,
+                    "b":  144
+                }
+            },
+            {
+                "name": "slategrey",
+                "hex": "708090",
+                "rgb": {
+                    "r":  112,
+                    "g":  128,
+                    "b":  144
+                }
+            },
+            {
+                "name": "snow",
+                "hex": "fffafa",
+                "rgb": {
+                    "r":  255,
+                    "g":  250,
+                    "b":  250
+                }
+            },
+            {
+                "name": "springgreen",
+                "hex": "00ff7f",
+                "rgb": {
+                    "r":  0,
+                    "g":  255,
+                    "b":  127
+                }
+            },
+            {
+                "name": "steelblue",
+                "hex": "4682b4",
+                "rgb": {
+                    "r":  70,
+                    "g":  130,
+                    "b":  180
+                }
+            },
+            {
+                "name": "tan",
+                "hex": "d2b48c",
+                "rgb": {
+                    "r":  210,
+                    "g":  180,
+                    "b":  140
+                }
+            },
+            {
+                "name": "teal",
+                "hex": "008080",
+                "rgb": {
+                    "r":  0,
+                    "g":  128,
+                    "b":  128
+                }
+            },
+            {
+                "name": "thistle",
+                "hex": "d8bfd8",
+                "rgb": {
+                    "r":  216,
+                    "g":  191,
+                    "b":  216
+                }
+            },
+            {
+                "name": "tomato",
+                "hex": "ff6347",
+                "rgb": {
+                    "r":  255,
+                    "g":  99,
+                    "b":  71
+                }
+            },
+            {
+                "name": "turquoise",
+                "hex": "40e0d0",
+                "rgb": {
+                    "r":  64,
+                    "g":  224,
+                    "b":  208
+                }
+            },
+            {
+                "name": "violet",
+                "hex": "ee82ee",
+                "rgb": {
+                    "r":  238,
+                    "g":  130,
+                    "b":  238
+                }
+            },
+            {
+                "name": "wheat",
+                "hex": "f5deb3",
+                "rgb": {
+                    "r":  245,
+                    "g":  222,
+                    "b":  179
+                }
+            },
+            {
+                "name": "white",
+                "hex": "ffffff",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  255
+                }
+            },
+            {
+                "name": "whitesmoke",
+                "hex": "f5f5f5",
+                "rgb": {
+                    "r":  245,
+                    "g":  245,
+                    "b":  245
+                }
+            },
+            {
+                "name": "yellow",
+                "hex": "ffff00",
+                "rgb": {
+                    "r":  255,
+                    "g":  255,
+                    "b":  0
+                }
+            },
+            {
+                "name": "yellowgreen",
+                "hex": "9acd32",
+                "rgb": {
+                    "r":  154,
+                    "g":  205,
+                    "b":  50
+                }
+            }
+        ]
+
     }
 
     function printEventObj(e){
         console.log(e)
+    }
+
+    function validator(blueprint, input, fn){
+        let errorstr = `Error in function: ${fn}\n`;
+        let errortest = errorstr;
+        for(const prop of blueprint){
+            //existance validation
+            if(prop.req && input[prop.name] == undefined){
+                errorstr += `Expected property: ${prop.name} not found in input\n`;
+            } else {
+                if(!prop.req && input[prop.name] == undefined) continue;
+                //type validation
+                let p = input[prop.name];
+                if(typeof p != prop.type){
+                    errorstr += `Type Error. In property: '${prop.name}', expected type: ${prop.type} actual type: ${typeof p}\n`;
+                } else {
+                    //value validation
+                    switch (prop.type) {
+                        case 'object':
+                            if(p == null) errorstr += `Value Error. In property: '${prop.name}', object is NULL\n`;
+                            break;
+                        case 'number':
+                            if(prop.min != undefined && p < prop.min)
+                                errorstr += `Value Error. In property: '${prop.name}', value should not be less than ${prop.min}, value provided: ${p}\n`;
+                            else if(prop.max != undefined && p > prop.max)
+                                errorstr += `Value Error. In property: '${prop.name}', value should not be greater than ${prop.max}, value provided: ${p}\n`;
+                                break;
+                        case 'string':
+                            if(prop.reg != undefined && !prop.reg.test(p))
+                                errorstr += `Value Error. In property: '${prop.name}', value should match regex: ${prop.reg}, value provided: ${p}\n`;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        if(errortest == errorstr){
+            return true;
+        } else {
+            console.error(errorstr);
+            return false;
+        }
     }
 
 
@@ -1485,8 +3123,24 @@ window.onload = () => {
     document.body.style.backgroundColor = testrgba.val;
 
     console.log(SBColour.RGBtoHSL(200, 171, 248));
-    console.log(SBColour.HSLtoRGB(62, 84, 53));
-    console.log(SBColour.HSLtoRGB(SBColour.RGBtoHSL(127, 16, 222)));
+    //console.log(SBColour.HSLtoRGB(62, 84, 53));
+    //console.log(SBColour.HSLtoRGB(SBColour.RGBtoHSL(127, 16, 222)));
 
-    console.log(SBColour.RGBtoHEX(38, 77, 244));
+    console.log(SBColour.RGBtoHEX(180, 77, 34, 0.5));
+    console.log(SBColour.HEXtoRGB('#02156e'));
+
+    console.log(SBColour.CSStoRGB('deepskyblue'));
+    console.log(SBColour.RGBtoCSS(0, 191, 255));
+
+    console.log(SBColour.CSStoHEX('darkslategrey'));
+    console.log(SBColour.HSLtoHEX(235, 70, 50, 0.4));
+    console.log(SBColour.HSLtoCSS(SBColour.CSStoHSL('bisque', 0.8)));
+    console.log(SBColour.HEXtoCSS('#d2691e'));
+    console.log(SBColour.HEXtoHSL('#dc143c'));
+    
+    
+    // let testobj = {a: 1, b:2, c: 3};
+    // ({a: x, b: y, c: z} = testobj);
+    // console.log(y);
+
 }

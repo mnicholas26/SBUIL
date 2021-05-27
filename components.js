@@ -1143,37 +1143,6 @@ window.onload = () => {
 
     // }
 
-    //USEFUL FUNCTIONS
-
-    //COLOUR STUFF
-    function hexToRGBA(str, alpha = false, opacity){
-        let hexreg = /#[abcdef\d]{8}|#[abcdef\d]{6}/i;
-        let reg = /\w{2}/g || [];
-        if(hexreg.test(str)){
-            let [r,g,b,a] = str.match(reg);
-            if(a == undefined) a = 'ff';
-            r = parseInt(r, 16);
-            g = parseInt(g, 16);
-            b = parseInt(b, 16);
-            a = opacity != undefined ? opacity : parseInt(a, 16)/255;
-            let val = 'rgb';
-            if(alpha) val += 'a'
-            val += `(${r}, ${g}, ${b}`
-            if(alpha) val += `, ${a.toFixed(2)}`;
-            val += ')';
-            return {
-                r: r,
-                g: g,
-                b: b,
-                a: a,
-                val: val
-            }
-        } else {
-            console.error(`String: ${str} is not a correctly formatted hex colour string`);
-            return false;
-        }
-    }
-
     class SBColour{
         _r = 0;
         _g = 0;
@@ -1184,59 +1153,264 @@ window.onload = () => {
         _l = 0;
         _type = 'rgb';
         _alpha = false;
-        _val = undefined;
         _hex = '#000000';
         _css = 'black';
 
-        constructor(type = 'rgb', r = 0, g = 0, b = 0, a = 1){
-            if(type == 'rgb'){
-                //
-            } else if(type = 'hsl'){
-                //
-            } else {
-                console.error(`Colour type must be 'rgb' or 'hsl'. Value provided: ${type}`);
+        lazy = false;
+        changed = false;
+
+        constructor(type = 'rgb', ...args){
+            if(validator({name: 'type', req: true, type: 'string'}, {type: type}, 'Colour.val')){
+                if(type == 'rgb' || type == 'hsl' || type == 'hex' || type == 'css'){
+                    if(type == 'rgb'){
+                        let [r, g, b, a] = args;
+                        this.RGB(r, g, b, a);
+                    } else if(type == 'hsl'){
+                        let [h, s, l, a] = args;
+                        this.HSL(h, s, l, a);
+                    } else if(type == 'hex'){
+                        this.hex = args[0];
+                    } else if(type == 'css'){
+                        this.css = args[0];
+                    }
+                    this._type = type;
+                    this.update();
+                } else console.error(`Value Error. Type must be either 'rgb', 'hsl', 'hex' or 'css'. provided value: ${type}`);
             }
-            _r = r;
-            _g = g;
-            _b = b;
-            _type = type;
-            _a = a;
         }
 
-        static RGBtoHSL(...args){
-            let r, g, b, a, alpha = false, opts = {};
-
-            if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
-            let options = {
-                round: (opts.round) ? true : false
+        update(type = 'rgb'){
+            switch (type) {
+                case 'rgb':
+                    this.#HSL(this.#RGBtoHSL(this.rgb));
+                    this._hex = this.#RGBtoHEX(this.rgb);
+                    this._css = this.#RGBtoCSS(this.rgb);
+                    break;
+                case 'hsl':
+                    this.#RGB(this.#HSLtoRGB(this.hsl));
+                    this._hex = this.#RGBtoHEX(this.rgb);
+                    this._css = this.#RGBtoCSS(this.rgb);
+                    break;
+                case 'hex':
+                    this.#RGB(this.#HEXtoRGB(this.hex));
+                    this.#HSL(this.#RGBtoHSL(this.rgb));
+                    this._css = this.#RGBtoCSS(this.rgb);
+                    break;
+                case 'css':
+                    this.#RGB(this.#CSStoRGB(this.css));
+                    this._hex = this.#RGBtoHEX(this.rgb);
+                    this.#HSL(this.#RGBtoHSL(this.rgb));
+                    break;
+                default:
+                    break;
             }
+        }
 
-            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHSL')){
-                    r = args[0].r;
-                    g = args[0].g;
-                    b = args[0].b;
-                    if(args[0].a){
-                        alpha = true;
-                        a = args[0].a;
-                    }
-                } else return;
-            } else if(args.length == 3 || args.length == 4) {
-                let input = {
-                    r: args[0],
-                    g: args[1],
-                    b: args[2],
-                    a: args[3]
+        val(type = this._type){
+            if(!validator({name: 'type', req: true, type: 'string'}, {type: type}, 'Colour.val')) type = this._type;
+            let str = '';
+            let alpha = (this._a < 1) ? true : false;
+            switch (type) {
+                case 'rgb':
+                    str += 'rgb';
+                    if(alpha) str += 'a';
+                    str += `(${Math.round(this._r)}, ${Math.round(this._g)}, ${Math.round(this._b)}`;
+                    if(alpha) str += `, ${this._a}`;
+                    str += ')'; 
+                    break;
+                case 'hsl':
+                    str += 'hsl';
+                    if(alpha) str += 'a';
+                    str += `(${Math.round(this._h)}, ${Math.round(this._s)}, ${Math.round(this._l)}`;
+                    if(alpha) str += `, ${this._a}`;
+                    str += ')'; 
+                    break;
+                case 'hex':
+                    str += `#${this._hex}`;
+                    if(alpha) str += this._a.toString(16);
+                    break;
+                default:
+                    break;
+            }
+            return str;
+        }
+
+        get rgb(){
+            return {r: this._r, g: this._g, b: this._b, a: this._a};
+        }
+
+        set rgb(rgb){
+            if(validator(this.#RGBblueprint, rgb, 'Colour.rgb')){
+                this._r = rgb.r;
+                this._g = rgb.g;
+                this._b = rgb.b;
+                this._a = (rgb.a != undefined) ? rgb.a : this._a;
+                this.update();
+            }
+        }
+
+        RGB(r, g, b, a){
+            let input = {r: r, g: g, b: b, a: a};
+            if(validator(this.#RGBblueprint, input, 'Colour.RGB')){
+                this.#RGB(input);
+                this.update();
+            }
+        }
+
+        #RGB(obj){
+            this._r = obj.r;
+            this._g = obj.g;
+            this._b = obj.b;
+            this._a = (obj.a != undefined) ? obj.a : this._a;
+        }
+
+        get hsl(){
+            return {h: this._h, s: this._s, l: this._l, a: this._a};
+        }
+
+        set hsl(hsl){
+            if(validator(this.#HSLblueprint, hsl, 'Colour.hsl')){
+                this._h = hsl.h;
+                this._s = hsl.s;
+                this._l = hsl.l;
+                this._a = (hsl.a != undefined) ? hsl.a : this._a;
+                this.update();
+            }
+        }
+
+        HSL(h, s, l, a){
+            let input = {h: h, s: s, l: l, a: a};
+            if(validator(this.#HSLblueprint, input, 'Colour.HSL')){
+                this.#HSL(input);
+                this.update('hsl');
+            }
+        }
+
+        #HSL(obj){
+            this._h = obj.h;
+            this._s = obj.s;
+            this._l = obj.l;
+            this._a = (obj.a != undefined) ? obj.a : this._a;
+        }
+
+        get r(){
+            return this._r;
+        }
+        set r(val){
+            if(validator({name: 'r', req: true, type: 'number', min: 0, max: 255}, {r: val}, 'Colour.r')){
+                this._r = val;
+                this.update();
+            }
+        }
+
+        get b(){
+            return this._b;
+        }
+        set b(val){
+            if(validator({name: 'b', req: true, type: 'number', min: 0, max: 255}, {b: val}, 'Colour.b')){
+                this._b = val;
+                this.update();
+            }
+        }
+
+        get g(){
+            return this._g;
+        }
+        set g(val){
+            if(validator({name: 'g', req: true, type: 'number', min: 0, max: 255}, {g: val}, 'Colour.g')){
+                this._g = val;
+                this.update();
+            }
+        }
+
+        get h(){
+            return this._h;
+        }
+        set h(val){
+            if(validator({name: 'h', req: true, type: 'number', min: 0, max: 360}, {h: val}, 'Colour.h')){
+                this._h = val;
+                this.update('hsl');
+            }
+        }
+
+        get s(){
+            return this._s;
+        }
+        set s(val){
+            if(validator({name: 's', req: true, type: 'number', min: 0, max: 100}, {s: val}, 'Colour.s')){
+                this._s = val;
+                this.update('hsl');
+            }
+        }
+
+        get l(){
+            return this._l;
+        }
+        set l(val){
+            if(validator({name: 'l', req: true, type: 'number', min: 0, max: 100}, {l: val}, 'Colour.l')){
+                this._l = val;
+                this.update('hsl');
+            }
+        }
+
+        get a(){
+            return this._a;
+        }
+        set a(val){
+            if(validator({name: 'a', req: true, type: 'number', min: 0, max: 1}, {a: val}, 'Colour.a')){
+                this._a = val;
+                this.update();
+            }
+        }
+
+        get hex(){
+            return this._hex;
+        }
+        set hex(val){
+            if(validator(this.#HEXblueprint, {hex: val}, 'Colour.hex')){
+                let h = val.slice(val.indexOf('#') + 1);
+                
+                if(h.length == 1) h = h.repeat(6);
+                else if(h.length == 2) h = h.repeat(3);
+                else if(h.length == 3) h = h.repeat(2);
+                else if(!(h.length == 6 || h.length == 8))
+                    console.error(`Value Error. Hex Code: '${h}' has length: '${h.length}' but should be either 1, 2, 3, 6 or 8 digits long`);
+                h = h.toLowerCase();
+                
+                let reg = /\w{2}/g || [];
+                let [r, g, b, a] = h.match(reg);
+                
+                if(a != undefined) this._a = parseInt(a, 16)/255;
+                this._hex = r + g + b;
+                this.update('hex');
+            }
+        }
+
+        get css(){
+            return this._css;
+        }
+        set css(name){
+            if(validator({name: 'name', req: true, type: 'string'}, {name: name}, 'Colour.css')){
+                let newname = this.#cssTable.find(o => o.name == name.toLowerCase()).name.toLowerCase();
+                if(newname != undefined){
+                    this._css = newname;
+                    this.update('css');
                 }
-                if(validator(SBColour.RGBblueprint, input, 'RGBtoHSL')){
-                    [r, g, b, a] = args;
-                    if(a) alpha = true;
-                } else return;
-            } else {
-                console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
-                return;
             }
+        }
 
+        get type(){
+            return this._type;
+        }
+        set type(str){
+            if(validator({name: 'type', req: true, type: 'string'}, {type: str}, 'Colour.type')){
+                if(str == 'rgb' || str == 'hsl' || str == 'hex') this._type = str;
+                else console.error(`Value Error. Type must be either 'rgb', 'hsl' or 'hex'. provided value: ${str}`);
+            }
+        }
+
+        #RGBtoHSL(obj){
+            let {r, g, b, a} = obj;
             let rr = r/255;
             let gg = g/255;
             let bb = b/255;
@@ -1255,57 +1429,31 @@ window.onload = () => {
             if(delta == 0) s = 0;
             else s = delta / (1 - Math.abs((2 * l) - 1));
 
-            // let out = {
-            //     h: Math.round(h),
-            //     s: Math.round(s * 1000) / 10,
-            //     l: Math.round(l * 1000) / 10
-            // }
-
             let out = {
-                h: options.round ? Math.round(h) : h,
-                s: options.round ? Math.round(s * 1000) / 10 : s * 100,
-                l: options.round ? Math.round(l * 1000) / 10 : l * 100
+                h: h,
+                s: s * 100,
+                l: l * 100,
+                a: a
             }
-
-            if(alpha) out.a = a;
 
             return out;
         }
 
-        static HSLtoRGB(...args){
-            let h, s, l, a, alpha = false, opts = {};
+        #RGBtoHEX(obj){
+            let {r, g, b, a} = obj;
+            return Math.round(r).toString(16) + Math.round(g).toString(16) + Math.round(b).toString(16);
+        }
 
-            if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
-            let options = {
-                round: (opts.round) ? true : false
-            }
+        #RGBtoCSS(obj){
+            let {r, g, b, a} = obj;
+            let out = this.#cssTable.find(o => (o.rgb.r == r && o.rgb.g == g && o.rgb.b == b));
+            if(out != undefined) out = out.name;
+            else out = "";
+            return out;
+        }
 
-            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(validator(SBColour.HSLblueprint, args[0], 'HSLtoRGB')){
-                    h = args[0].h;
-                    s = args[0].s;
-                    l = args[0].l;
-                    if(args[0].a){
-                        alpha = true;
-                        a = args[0].a;
-                    }
-                } else return;
-            } else if(args.length == 3 || args.length == 4) {
-                let input = {
-                    h: args[0],
-                    s: args[1],
-                    l: args[2],
-                    a: args[3]
-                }
-                if(validator(SBColour.HSLblueprint, input, 'HSLtoRGB')){
-                    [h, s, l, a] = args;
-                    if(a) alpha = true;
-                } else return;
-            } else {
-                console.error(`Argument Error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
-                return;
-            }
-
+        #HSLtoRGB(obj){
+            let {h, s, l, a} = obj;
             let r, g, b;
             s /= 100;
             l /= 100;
@@ -1326,76 +1474,111 @@ window.onload = () => {
             b = (b + m) * 255;
 
             let out = {
-                r: options.round ? Math.round(r) : r,
-                g: options.round ? Math.round(g) : g,
-                b: options.round ? Math.round(b) : b
+                r: r,
+                g: g,
+                b: b,
+                a: a
             }
-
-            if(alpha) out.a = a;
 
             return out;
         }
 
-        static RGBtoHEX(...args){
-            let r, g, b, a, alpha = false, opts = {};
+        #HEXtoRGB(hex){
+            let [r, g, b, a] = hex.match(/\w{2}/g);
+            if(a != undefined) a = parseInt(a, 16);
+            return {r: parseInt(r, 16), g: parseInt(g, 16), b: parseInt(b, 16), a: a};
+        }
+
+        #CSStoRGB(name){
+            let out = this.#cssTable.find(o => o.name == name.toLowerCase());
+            if(out != undefined) out = out.rgb;
+            return out;
+        }
+
+        static RGBtoHSL(...args){
+            let rgb, opts = {};
 
             if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
             let options = {
-                alpha: opts.alpha ? true : false
+                round: (opts.round) ? true : false
             }
 
             if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')){
-                    r = args[0].r;
-                    g = args[0].g;
-                    b = args[0].b;
-                    if(args[0].a){
-                        alpha = true;
-                        a = args[0].a;
-                    }
-                } else return;
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHSL')) rgb = args[0];
+                else return;
             } else if(args.length == 3 || args.length == 4) {
-                let input = {
-                    r: args[0],
-                    g: args[1],
-                    b: args[2],
-                    a: args[3]
-                }
-                if(validator(SBColour.RGBblueprint, input, 'RGBtoHEX')){
-                    [r, g, b, a] = args;
-                    if(a) alpha = true;
-                } else return;
+                let [r, g, b, a] = args;
+                let input  = {r: r, g: g, b: b, a: a};
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoHSL')) rgb = input;
+                else return;
             } else {
                 console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
                 return;
             }
 
-            let hex = '#';
-            hex += Math.round(r).toString(16) + Math.round(g).toString(16) + Math.round(b).toString(16);
-            if(alpha && options.alpha) {
-                a=Math.round(255 * a);
-                hex += a.toString(16);
+            let hsl = this.#RGBtoHSL(rgb)
+            if(options.round) {
+                hsl.h = Math.round(hsl.h);
+                hsl.s = Math.round(hsl.s);
+                hsl.l = Math.round(hsl.l);
+            }
+            return hsl;
+        }
+
+        static HSLtoRGB(...args){
+            let hsl, opts = {};
+
+            if(args.length > 1 && typeof args[args.length - 1] == 'object' && args[args.length - 1] != null) opts = args.pop();
+            let options = {
+                round: (opts.round) ? true : false
             }
 
-            return hex;
+            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
+                if(validator(SBColour.HSLblueprint, args[0], 'HSLtoRGB')) hsl = args[0];
+                else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let [h, s, l, a] = args;
+                let input = {h: h, s: s, l: l, a: a};
+                if(validator(SBColour.HSLblueprint, input, 'HSLtoRGB')) hsl = input;
+                else return;
+            } else {
+                console.error(`Argument Error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
+                return;
+            }
+
+            let rgb = this.#HSLtoRGB(hsl)
+            if(options.round) {
+                rgb.r = Math.round(rgb.r);
+                rgb.g = Math.round(rgb.g);
+                rgb.b = Math.round(rgb.b);
+            }
+            return rgb;
+        }
+
+        static RGBtoHEX(...args){
+            let rgb;
+
+            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')) rgb = args[0];
+                else return;
+            } else if(args.length == 3 || args.length == 4) {
+                let [r, g, b, a] = args;
+                let input  = {r: r, g: g, b: b, a: a};
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoHEX')) rgb = input;
+                else return;
+            } else {
+                console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b and possibly a values`);
+                return;
+            }
+
+            return '#' + this.#RGBtoHEX(rgb)
         }
 
         static HEXtoRGB(hex, opacity){
             let hexreg = /#[abcdef\d]*/i;
             let blueprint = [
-                {
-                    name: 'hex',
-                    req: true,
-                    type: 'string',
-                    reg: hexreg
-                },
-                {
-                    name: 'opacity',
-                    req: false,
-                    type: 'number',
-                    min: 0,
-                    max: 1
-                }
+                {name: 'hex', req: true, type: 'string', reg: hexreg},
+                {name: 'opacity', req: false, type: 'number', min: 0, max: 1}
             ];
             if(validator(blueprint, {hex: hex, opacity: opacity}, 'HEXtoRGB')){
                 hex = hex.slice(hex.indexOf('#') + 1);
@@ -1406,116 +1589,69 @@ window.onload = () => {
                     console.error(`Value Error. Hex Code: '${hex}' has length: '${hex.length}' but should be either 1, 2, 3, 6 or 8 digits long`);
                 hex = hex.toLowerCase();
                 
-                let reg = /\w{2}/g || [];
-                let [r, g, b, a] = hex.match(reg);
-                if(a == undefined) a = 'ff';
-                r = parseInt(r, 16);
-                g = parseInt(g, 16);
-                b = parseInt(b, 16);
-                a = opacity != undefined ? opacity : parseInt(a, 16)/255;
-                return {
-                    r: r,
-                    g: g,
-                    b: b,
-                    a: (hex.length == 8) ? a : undefined
-                }
-            }
-        }
-
-        static CSStoRGB(name, opacity){
-            if(validator([{name: 'opacity', req: false, type: 'number', min: 0, max: 1},
-                            {name: 'name', req: true, type: 'string'}], {opacity: opacity, name: name}, 'CSStoRGB')){
-                let out = SBColour.cssTable.find(o => o.name == name.toLowerCase());
-                if(out != undefined){
-                    let a = opacity != undefined ? opacity : undefined;
-                    out = out.rgb;
-                    out.a = a;
-                }
+                let out = this.#HEXtoRGB(hex);
+                if(opacity != undefined) out.a = opacity;
                 return out;
             }
         }
 
         static RGBtoCSS(...args){
-            let r, g, b;
+            let rgb;
 
             if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')){
-                    r = args[0].r;
-                    g = args[0].g;
-                    b = args[0].b;
-                } else return;
+                if(validator(SBColour.RGBblueprint, args[0], 'RGBtoHEX')) rgb = args[0];
+                else return;
             } else if(args.length == 3 || args.length == 4) {
-                let input = {
-                    r: args[0],
-                    g: args[1],
-                    b: args[2]
-                }
-                if(validator(SBColour.RGBblueprint, input, 'RGBtoCSS')){
-                    [r, g, b] = args;
-                } else return;
+                let [r, g, b, a] = args;
+                let input  = {r: r, g: g, b: b, a: a};
+                if(validator(SBColour.RGBblueprint, input, 'RGBtoCSS')) rgb = input;
+                else return;
             } else {
                 console.error(`Argument Error: Please pass either an object with RGB properties or r, g, b values`);
                 return;
             }
             
-            let out = SBColour.cssTable.find(o => (o.rgb.r == r && o.rgb.g == g && o.rgb.b == b));
-            if(out != undefined) out = out.name;
-            return out;
+            return this.#RGBtoCSS(rgb);
+        }
+
+        static CSStoRGB(name, opacity){
+            let blueprint = [
+                {name: 'opacity', req: false, type: 'number', min: 0, max: 1},
+                {name: 'name', req: true, type: 'string'}
+            ];
+            if(validator(blueprint, {opacity: opacity, name: name}, 'CSStoRGB')){
+                let rgb = this.#CSStoRGB(name);
+                if(rgb != undefined) rgb.a = (opacity != undefined) ? opacity : 1;
+                return rgb;
+            }
         }
 
         //may turn these functions into direct functions at a later date
         static HSLtoHEX(...args){
-            let h, s, l, a;
-            if(args.length == 1 && typeof args[0] == 'object' && args[0] != null){
-                if(validator(SBColour.HSLblueprint, args[0], 'HSLtoRGB')){
-                    h = args[0].h;
-                    s = args[0].s;
-                    l = args[0].l;
-                    if(args[0].a){
-                        alpha = true;
-                        a = args[0].a;
-                    }
-                } else return;
-            } else if(args.length == 3 || args.length == 4) {
-                let input = {
-                    h: args[0],
-                    s: args[1],
-                    l: args[2],
-                    a: args[3]
-                }
-                if(validator(SBColour.HSLblueprint, input, 'HSLtoRGB')){
-                    [h, s, l, a] = args;
-                    if(a) alpha = true;
-                } else return;
-            } else {
-                console.error(`Argument Error: Please pass either an object with HSL properties or h, s, l and possibly a values`);
-                return;
-            }
-            return SBColour.RGBtoHEX(SBColour.HSLtoRGB(r, g, b, a));
+            //
         }
 
         static HSLtoCSS(...args){
-            let [r, g, b, a] = args;
-            return SBColour.RGBtoCSS(SBColour.HSLtoRGB(r, g, b, a));
+            //
         }
 
         static CSStoHEX(name, opacity){
-            return SBColour.RGBtoHEX(SBColour.CSStoRGB(name, opacity));
+            //
         }
 
         static CSStoHSL(name, opacity){
-            return SBColour.RGBtoHSL(SBColour.CSStoRGB(name, opacity));
+            //
         }
 
         static HEXtoHSL(hex, opacity){
-            return SBColour.RGBtoHSL(SBColour.HEXtoRGB(hex, opacity));
+            //
         }
 
         static HEXtoCSS(hex, opacity){
-            return SBColour.RGBtoCSS(SBColour.HEXtoRGB(hex, opacity));
+            //
         }
 
-        static RGBblueprint = [
+        #RGBblueprint = [
             {
                 name: 'r',
                 req: true,
@@ -1546,7 +1682,7 @@ window.onload = () => {
             },
         ];
 
-        static HSLblueprint = [
+        #HSLblueprint = [
             {
                 name: 'h',
                 req: true,
@@ -1577,7 +1713,16 @@ window.onload = () => {
             },
         ];
 
-        static cssTable = [
+        #HEXblueprint = [
+            {
+                name: 'hex',
+                req: true,
+                type: 'string',
+                reg: /#[abcdef\d]*/i
+            }
+        ];
+
+        #cssTable = [
             {
                 "name": "black",
                 "hex": "000000",
@@ -3045,7 +3190,7 @@ window.onload = () => {
                     "b":  50
                 }
             }
-        ]
+        ];
 
     }
 
@@ -3056,6 +3201,7 @@ window.onload = () => {
     function validator(blueprint, input, fn){
         let errorstr = `Error in function: ${fn}\n`;
         let errortest = errorstr;
+        if(typeof blueprint == 'object' && blueprint != null) blueprint = [blueprint];
         for(const prop of blueprint){
             //existance validation
             if(prop.req && input[prop.name] == undefined){
@@ -3117,30 +3263,35 @@ window.onload = () => {
     testdslider.addListener('change', printEventObj, {final: true, user: true});
     testdslider.value = {min: 0.1, max: 0.9};
 
-    let testhex = '#b22b64'
-    let testrgba = hexToRGBA(testhex);
-    console.log(testrgba);
-    document.body.style.backgroundColor = testrgba.val;
+    // let testhex = '#b22b64'
+    // let testrgba = hexToRGBA(testhex);
+    // console.log(testrgba);
+    // document.body.style.backgroundColor = testrgba.val;
 
-    console.log(SBColour.RGBtoHSL(200, 171, 248));
-    //console.log(SBColour.HSLtoRGB(62, 84, 53));
-    //console.log(SBColour.HSLtoRGB(SBColour.RGBtoHSL(127, 16, 222)));
+    // console.log(SBColour.RGBtoHSL(200, 171, 248));
+    // //console.log(SBColour.HSLtoRGB(62, 84, 53));
+    // //console.log(SBColour.HSLtoRGB(SBColour.RGBtoHSL(127, 16, 222)));
 
-    console.log(SBColour.RGBtoHEX(180, 77, 34, 0.5));
-    console.log(SBColour.HEXtoRGB('#02156e'));
+    // console.log(SBColour.RGBtoHEX(180, 77, 34, 0.5));
+    // console.log(SBColour.HEXtoRGB('#02156e'));
 
-    console.log(SBColour.CSStoRGB('deepskyblue'));
-    console.log(SBColour.RGBtoCSS(0, 191, 255));
+    // console.log(SBColour.CSStoRGB('deepskyblue'));
+    // console.log(SBColour.RGBtoCSS(0, 191, 255));
 
-    console.log(SBColour.CSStoHEX('darkslategrey'));
-    console.log(SBColour.HSLtoHEX(235, 70, 50, 0.4));
-    console.log(SBColour.HSLtoCSS(SBColour.CSStoHSL('bisque', 0.8)));
-    console.log(SBColour.HEXtoCSS('#d2691e'));
-    console.log(SBColour.HEXtoHSL('#dc143c'));
+    // console.log(SBColour.CSStoHEX('darkslategrey'));
+    // console.log(SBColour.HSLtoHEX(235, 70, 50, 0.4));
+    // console.log(SBColour.HSLtoCSS(SBColour.CSStoHSL('bisque', 0.8)));
+    // console.log(SBColour.HEXtoCSS('#d2691e'));
+    // console.log(SBColour.HEXtoHSL('#dc143c'));
     
     
     // let testobj = {a: 1, b:2, c: 3};
     // ({a: x, b: y, c: z} = testobj);
     // console.log(y);
+    let c = new SBColour('css', 'beige');
+    console.log(c.css);
+    c.hex = '#f0a';
+    console.log(c.rgb);
+    console.log(c.val('rgb'));
 
 }
